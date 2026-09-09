@@ -1748,7 +1748,16 @@
       const printableArea = document.getElementById('printable-slip-area');
 
       let chainedNote = '';
-      if (item.chained) {
+      if (item.isCoverRecord) {
+        chainedNote = `
+          <div class="p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-950 text-xs mb-4">
+            <div class="font-bold flex items-center gap-1 mb-1">
+              <i class="ph ph-user-switch text-amber-700"></i> 代課事由與看管指引：
+            </div>
+            <div>${item.note || `原負責教師 ${item.teacherA} 因公/校務調堂，該節職務由 ${item.teacherB} 老師代為看管輔導。`}</div>
+          </div>
+        `;
+      } else if (item.chained) {
         chainedNote = `
           <div class="p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-xs mb-4">
             <div class="font-bold flex items-center justify-between mb-1">
@@ -1769,12 +1778,16 @@
         `;
       }
 
-      lastGeneratedSlipText = `【學校調課通知單】\n編號：${item.id}\n類別：${item.type}\n申請科任：${item.teacherA}\n受調科任：${item.teacherB}\n任教班別：${item.className}班\n調動明細：${item.origSlot} ⇄ ${item.targetSlot}\n日期：${item.date}${item.linkedSlipId ? '\n關聯單號：' + item.linkedSlipId : ''}`;
+      const slipTitle = item.isCoverRecord ? '學 校 代 課 通 知 單' : '學 校 調 課 通 知 單';
+      const colAHeader = item.isCoverRecord ? '原負責教師' : '原課節 (申請方)';
+      const colBHeader = item.isCoverRecord ? '代課教師' : '互換新課節 (受調方)';
+
+      lastGeneratedSlipText = `【${slipTitle}】\n編號：${item.id}\n類別：${item.type}\n申請/原任：${item.teacherA}\n受調/代課：${item.teacherB}\n班別：${item.className}班\n時段：${item.origSlot}\n日期：${item.date}${item.linkedSlipId ? '\n關聯單號：' + item.linkedSlipId : ''}`;
 
       printableArea.innerHTML = `
         <div class="max-w-2xl mx-auto border-2 border-slate-800 p-6 sm:p-8 rounded-xl bg-white space-y-6">
           <div class="text-center border-b-2 border-slate-800 pb-4">
-            <h2 class="text-xl sm:text-2xl font-black tracking-wider text-slate-900">學 校 調 課 通 知 單</h2>
+            <h2 class="text-xl sm:text-2xl font-black tracking-wider text-slate-900">${slipTitle}</h2>
             <div class="flex justify-between items-center text-xs text-slate-600 mt-2">
               <span>單號：<span class="font-mono font-bold">${item.id}</span></span>
               <span>簽發日期：${item.date}</span>
@@ -1784,13 +1797,13 @@
           ${chainedNote}
 
           <div class="space-y-2">
-            <div class="text-xs font-bold text-slate-800">一、 調堂事項明細：</div>
+            <div class="text-xs font-bold text-slate-800">一、 ${item.isCoverRecord ? '代課節數與指派明細：' : '調堂事項明細：'}</div>
             <table class="w-full text-xs border border-slate-800 border-collapse text-center">
               <thead>
                 <tr class="bg-slate-100 font-bold border-b border-slate-800">
                   <th class="p-2 border-r border-slate-800">項目</th>
-                  <th class="p-2 border-r border-slate-800">原課節 (申請方)</th>
-                  <th class="p-2">互換新課節 (受調方)</th>
+                  <th class="p-2 border-r border-slate-800">${colAHeader}</th>
+                  <th class="p-2">${colBHeader}</th>
                 </tr>
               </thead>
               <tbody class="divide-y border-b border-slate-800">
@@ -1800,12 +1813,12 @@
                   <td class="p-2 font-bold">${item.classB || item.className} 班</td>
                 </tr>
                 <tr>
-                  <td class="p-2 font-bold border-r border-slate-800 bg-slate-50">科任教師</td>
+                  <td class="p-2 font-bold border-r border-slate-800 bg-slate-50">教師姓名</td>
                   <td class="p-2 border-r border-slate-800 font-bold text-indigo-700">${item.teacherA}</td>
-                  <td class="p-2 font-bold text-emerald-700">${item.teacherB}</td>
+                  <td class="p-2 font-bold text-amber-700">${item.teacherB} ${item.isCoverRecord ? '(代課)' : ''}</td>
                 </tr>
                 <tr>
-                  <td class="p-2 font-bold border-r border-slate-800 bg-slate-50">科目及性質</td>
+                  <td class="p-2 font-bold border-r border-slate-800 bg-slate-50">科目／性質</td>
                   <td class="p-2 border-r border-slate-800">${item.subjectA} ${item.isDouble ? '(雙教節)' : ''} ${item.isCoTeaching ? '(協同教學)' : ''}</td>
                   <td class="p-2">${item.subjectB} ${item.isDouble ? '(雙教節)' : ''}</td>
                 </tr>
@@ -1819,16 +1832,16 @@
           </div>
 
           <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs">
-            <strong>學生通知備註：</strong> 請 ${item.className} 班長於黑板更新上課次序，同學請按新次序帶備課本及作業。
+            <strong>${item.isCoverRecord ? '代課職務指示：' : '學生通知備註：'}</strong> ${item.isCoverRecord ? '請代課教師按時前往該班看管督導，維持課室秩序並指導學生完成功課。' : `請 ${item.className} 班長於黑板更新上課次序，同學請按新次序帶備課本及作業。`}
           </div>
 
           <div class="grid grid-cols-3 gap-4 pt-6 border-t border-slate-300 text-xs">
             <div class="text-center space-y-8">
-              <div class="text-slate-500">申請教師簽署</div>
+              <div class="text-slate-500">${item.isCoverRecord ? '原任教師簽署' : '申請教師簽署'}</div>
               <div class="border-b border-slate-400 font-bold">${item.teacherA}</div>
             </div>
             <div class="text-center space-y-8">
-              <div class="text-slate-500">受調教師簽署</div>
+              <div class="text-slate-500">${item.isCoverRecord ? '代課教師簽署' : '受調教師簽署'}</div>
               <div class="border-b border-slate-400 font-bold">${item.teacherB}</div>
             </div>
             <div class="text-center space-y-8">
