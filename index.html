@@ -469,6 +469,15 @@
       return slot ? slot.cleanLabel : periodKey;
     }
 
+    // Check if a slot is a Period 10 Tutorial (第 10 節 導修 / 功課輔導)
+    function isPeriod10Tutorial(lesson) {
+      if (!lesson) return false;
+      const isP10 = lesson.period === 'S17';
+      const sub = (lesson.subject || '').trim();
+      const isTutorial = sub.includes('導修') || sub.includes('功課') || sub.includes('輔導') || sub.includes('自修') || sub.includes('導師');
+      return isP10 && isTutorial;
+    }
+
     function generateDemoTimetable() {
       const records = [];
 
@@ -519,11 +528,12 @@
           addRecord(day, 'S14', '4B', '常識', '李偉民老師', false);
           addRecord(day, 'S15', '4B', '音樂', '王若愚老師', false);
           addRecord(day, 'S16', '4B', '體育', '郭靜敏老師', false);
-          addRecord(day, 'S17', '4B', '功課輔導', '黃志文老師', false);
+          addRecord(day, 'S17', '4B', '導修', '黃志文老師', false);
 
           // 4A sample
           addRecord(day, 'S04', '4A', '視藝', '張海倫老師', false);
           addRecord(day, 'S10', '4A', '中文', '陳秀芬老師', false);
+          addRecord(day, 'S17', '4A', '導修', '李偉民老師', false);
         } else if (day === '星期二') {
           // Tuesday 4B schedule
           addRecord(day, 'S04', '4B', '中文', '陳秀芬老師', true, 'S05');
@@ -535,7 +545,8 @@
           addRecord(day, 'S14', '4B', '體育', '郭靜敏老師', false);
           addRecord(day, 'S15', '4B', '電腦', '李偉民老師', false);
           addRecord(day, 'S16', '4B', '中文', '陳秀芬老師', false);
-          addRecord(day, 'S17', '4B', '數學補輔', '黃志文老師', false);
+          addRecord(day, 'S17', '4B', '導修', '陳秀芬老師', false);
+          addRecord(day, 'S17', '4A', '導修', '郭靜敏老師', false);
         } else if (day === '星期五') {
           // Friday has an irregular/fixed special lesson: 週會 (不能調動)
           addRecord(day, 'S04', '4B', '英文', ['Mr. Roberts', '周詠詩老師'], false);
@@ -548,7 +559,8 @@
           addRecord(day, 'S15', '4B', '中文', '陳秀芬老師', false);
           // Special irregular locked lesson
           addRecord(day, 'S16', '全校', '全校導師週會 (固定活動)', '陳秀芬老師', false, null, false, true, '全校導師週會 (不定期特殊活動)');
-          addRecord(day, 'S17', '4B', '班級活動', '黃志文老師', false);
+          addRecord(day, 'S17', '4B', '導修', '王若愚老師', false);
+          addRecord(day, 'S17', '4A', '導修', '張海倫老師', false);
         } else {
           addRecord(day, 'S04', '4B', '英文', ['Mr. Roberts', '周詠詩老師'], false);
           addRecord(day, 'S05', '4B', '數學', '黃志文老師', false);
@@ -559,7 +571,8 @@
           addRecord(day, 'S14', '4B', '音樂', '王若愚老師', false);
           addRecord(day, 'S15', '4B', '中文', '陳秀芬老師', false);
           addRecord(day, 'S16', '4B', '英文', ['Mr. Roberts', '周詠詩老師'], false);
-          addRecord(day, 'S17', '4B', '導師節', '陳秀芬老師', false);
+          addRecord(day, 'S17', '4B', '導修', '周詠詩老師', false);
+          addRecord(day, 'S17', '4A', '導修', '李偉民老師', false);
         }
       });
 
@@ -929,6 +942,8 @@
         return;
       }
 
+      const isSrcTutorial = isPeriod10Tutorial(srcLesson);
+
       // Filter other lessons of the same class across the week (excluding self and double partner)
       const classLessons = currentTimetable.filter(r => 
         r.className === srcLesson.className && 
@@ -944,8 +959,27 @@
 
       let optionsHtml = '<option value="">-- 請選擇目標對調課節 --</option>';
 
+      // SPECIAL RULE: If src is Period 10 Tutorial, allow swapping with any other Period 10 Tutorial across ANY class or day
+      if (isSrcTutorial) {
+        const otherTutorials = currentTimetable.filter(r => 
+          isPeriod10Tutorial(r) && 
+          r.id !== srcLesson.id &&
+          !r.isLocked &&
+          !isLockedSlot(r.day, r.period, r.className)
+        );
+
+        if (otherTutorials.length > 0) {
+          optionsHtml += `<optgroup label="【第10節導修專屬互換】支援跨班及跨天互換">`;
+          otherTutorials.forEach(l => {
+            const isSameDayTag = l.day === srcLesson.day ? ' (當天同節換班)' : ` (${l.day} 跨天互換)`;
+            optionsHtml += `<option value="${l.id}">[第10節導修] ${l.className}班 - 由 ${l.teachers.join(', ')} 看管${isSameDayTag}</option>`;
+          });
+          optionsHtml += `</optgroup>`;
+        }
+      }
+
       if (sameDayLessons.length > 0) {
-        optionsHtml += `<optgroup label="【當天優先對調】${srcLesson.day}">`;
+        optionsHtml += `<optgroup label="【同班當天對調】${srcLesson.day}">`;
         sameDayLessons.forEach(l => {
           const pName = getSlotCleanTitle(l.period);
           const doubleText = l.isDouble ? ' [雙教節]' : '';
@@ -956,7 +990,7 @@
       }
 
       if (crossDayLessons.length > 0) {
-        optionsHtml += `<optgroup label="【跨天調課】其他教學日">`;
+        optionsHtml += `<optgroup label="【同班跨天調課】其他教學日">`;
         crossDayLessons.forEach(l => {
           const pName = getSlotCleanTitle(l.period);
           const doubleText = l.isDouble ? ' [雙教節]' : '';
@@ -1020,6 +1054,85 @@
       const destPartner = getDoublePartner(destLesson);
 
       const isSameDay = srcLesson.day === destLesson.day;
+      const isBothTutorial = isPeriod10Tutorial(srcLesson) && isPeriod10Tutorial(destLesson);
+
+      // SPECIAL CASE: Both are Period 10 Tutorials (兩者都是第10節導修可以互換)
+      if (isBothTutorial) {
+        let tutorialConflicts = [];
+
+        if (isSameDay) {
+          // Same day at Period 10: Teacher A swaps class with Teacher B simultaneously (Zero conflict guaranteed)
+        } else {
+          // Cross-day Period 10 swap: verify Teacher A is free at dest day P10, and Teacher B is free at src day P10
+          groupATeachers.forEach(tA => {
+            const c = currentTimetable.find(r => 
+              r.day === destLesson.day && 
+              r.period === 'S17' && 
+              r.teachers && r.teachers.includes(tA) && 
+              r.id !== destLesson.id
+            );
+            if (c) tutorialConflicts.push(`申請教師 ${tA} 於 ${destLesson.day} 第 10 節已有其他課節或當值 (${c.className} ${c.subject})`);
+          });
+
+          groupBTeachers.forEach(tB => {
+            const c = currentTimetable.find(r => 
+              r.day === srcLesson.day && 
+              r.period === 'S17' && 
+              r.teachers && r.teachers.includes(tB) && 
+              r.id !== srcLesson.id
+            );
+            if (c) tutorialConflicts.push(`受調教師 ${tB} 於 ${srcLesson.day} 第 10 節已有其他課節或當值 (${c.className} ${c.subject})`);
+          });
+        }
+
+        if (tutorialConflicts.length === 0) {
+          resultBox.className = 'rounded-xl p-4 text-xs border bg-sky-50 border-sky-200 text-sky-950 space-y-3';
+          resultBox.innerHTML = `
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2 font-bold text-sky-900 text-sm">
+                <i class="ph ph-check-circle text-lg text-sky-600"></i>
+                <span>診斷通過：【第 10 節導修專案互換】(${isSameDay ? '當天互調看管班別' : '跨天互換導修時段'})</span>
+              </div>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-200 text-sky-900">兩者皆為第10節導修特例</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-white/80 p-3 rounded-xl border border-sky-200/60">
+              <div>
+                <span class="text-slate-500 block text-[11px]">申請教師 (${groupATeachers.join(' & ')})：</span>
+                <div class="font-bold text-slate-800">${srcLesson.day} 第 10 節 [${srcLesson.className}班]</div>
+                <div class="text-slate-600">➔ 改為看管 <strong>${destLesson.day} 第 10 節 [${destLesson.className}班]</strong></div>
+              </div>
+              <div>
+                <span class="text-slate-500 block text-[11px]">受調教師 (${groupBTeachers.join(' & ')})：</span>
+                <div class="font-bold text-slate-800">${destLesson.day} 第 10 節 [${destLesson.className}班]</div>
+                <div class="text-slate-600">➔ 改為看管 <strong>${srcLesson.day} 第 10 節 [${srcLesson.className}班]</strong></div>
+              </div>
+            </div>
+            <div class="text-[11px] text-sky-800 font-medium">符合學校校規特例：兩者皆為第 10 節導修／功課輔導，允許跨班或跨天對調看管職責。</div>
+
+            <div class="flex justify-end pt-1">
+              <button onclick="executeDirectSwap('${srcLesson.id}', '${destLesson.id}')" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 active:scale-95 text-white font-bold rounded-xl shadow-sm transition flex items-center gap-1.5">
+                <i class="ph ph-check"></i> 確認套用導修互換並生成調課紙
+              </button>
+            </div>
+          `;
+          resultBox.classList.remove('hidden');
+          return;
+        } else {
+          resultBox.className = 'rounded-xl p-4 text-xs border bg-rose-50 border-rose-200 text-rose-900 space-y-2';
+          resultBox.innerHTML = `
+            <div class="flex items-center gap-2 font-bold text-rose-800 text-sm">
+              <i class="ph ph-warning-circle text-lg"></i>
+              <span>未能互換第 10 節導修 (檢測到時間衝突)</span>
+            </div>
+            <div class="text-[11px] text-rose-700 bg-white/70 p-3 rounded-xl border border-rose-200/60 leading-relaxed">
+              ${tutorialConflicts.join('<br>')}
+            </div>
+          `;
+          resultBox.classList.remove('hidden');
+          return;
+        }
+      }
 
       // Conflict verification for ALL teachers in Group A at target slot
       const conflictsA = [];
@@ -1163,7 +1276,64 @@
 
       const recordId = 'SLIP_' + Date.now();
       const movements = [];
+      const isBothTutorial = isPeriod10Tutorial(src) && isPeriod10Tutorial(dest);
 
+      if (isBothTutorial) {
+        // SPECIAL HANDLING FOR PERIOD 10 TUTORIAL SWAP: Swap teachers rather than slot time
+        const origTeachersSrc = [...src.teachers];
+        const origTeacherSrcStr = src.teacher;
+        const origTeachersDest = [...dest.teachers];
+        const origTeacherDestStr = dest.teacher;
+
+        movements.push({
+          lessonId: src.id,
+          isTeacherSwap: true,
+          fromTeachers: origTeachersSrc,
+          toTeachers: origTeachersDest
+        });
+        movements.push({
+          lessonId: dest.id,
+          isTeacherSwap: true,
+          fromTeachers: origTeachersDest,
+          toTeachers: origTeachersSrc
+        });
+
+        src.teachers = [...origTeachersDest];
+        src.teacher = origTeacherDestStr;
+        src.isSwapped = true;
+        src.swapSlipId = recordId;
+
+        dest.teachers = [...origTeachersSrc];
+        dest.teacher = origTeacherSrcStr;
+        dest.isSwapped = true;
+        dest.swapSlipId = recordId;
+
+        const record = {
+          id: recordId,
+          date: new Date().toLocaleDateString('zh-HK'),
+          type: '第 10 節導修互換',
+          teacherA: origTeacherSrcStr,
+          teacherB: origTeacherDestStr,
+          className: src.className === dest.className ? `${src.className}` : `${src.className} ⇄ ${dest.className}`,
+          classA: src.className,
+          classB: dest.className,
+          subjectA: src.subject,
+          subjectB: dest.subject,
+          origSlot: `${src.day} 第 10 節 (${src.className}班)`,
+          targetSlot: `${dest.day} 第 10 節 (${dest.className}班)`,
+          isDouble: false,
+          isCoTeaching: false,
+          isTutorialSwap: true,
+          movements: movements,
+          chained: false
+        };
+
+        swapHistory.unshift(record);
+        finishSwapAction(record);
+        return;
+      }
+
+      // STANDARD ACADEMIC SWAP
       const origSrcDay = src.day;
       const origSrcPeriod = src.period;
       const origDestDay = dest.day;
@@ -1218,6 +1388,7 @@
         targetSlot: `${src.day} ${getSlotCleanTitle(src.period)}`,
         isDouble: src.isDouble || dest.isDouble,
         isCoTeaching: src.isCoTeaching || dest.isCoTeaching,
+        isTutorialSwap: false,
         movements: movements,
         chained: false
       };
@@ -1336,8 +1507,13 @@
         item.movements.forEach(m => {
           const lesson = currentTimetable.find(r => r.id === m.lessonId);
           if (lesson) {
-            lesson.day = m.fromDay;
-            lesson.period = m.fromPeriod;
+            if (m.isTeacherSwap) {
+              lesson.teachers = [...m.fromTeachers];
+              lesson.teacher = m.fromTeachers.join(' & ');
+            } else {
+              lesson.day = m.fromDay;
+              lesson.period = m.fromPeriod;
+            }
             lesson.isSwapped = false;
             lesson.swapSlipId = null;
           }
@@ -1353,8 +1529,13 @@
             linkedItem.movements.forEach(m => {
               const lesson = currentTimetable.find(r => r.id === m.lessonId);
               if (lesson) {
-                lesson.day = m.fromDay;
-                lesson.period = m.fromPeriod;
+                if (m.isTeacherSwap) {
+                  lesson.teachers = [...m.fromTeachers];
+                  lesson.teacher = m.fromTeachers.join(' & ');
+                } else {
+                  lesson.day = m.fromDay;
+                  lesson.period = m.fromPeriod;
+                }
                 lesson.isSwapped = false;
                 lesson.swapSlipId = null;
               }
@@ -1434,7 +1615,7 @@
             <div>
               <div class="flex items-center gap-1.5 flex-wrap">
                 <span class="font-bold text-slate-800">${item.teacherA} ⇄ ${item.teacherB}</span>
-                <span class="px-1.5 py-0.2 rounded text-[10px] ${item.chained ? (item.stage === 1 ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800') : 'bg-indigo-100 text-indigo-800'} font-semibold">${item.type}</span>
+                <span class="px-1.5 py-0.2 rounded text-[10px] ${item.isTutorialSwap ? 'bg-sky-100 text-sky-800' : (item.chained ? (item.stage === 1 ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800') : 'bg-indigo-100 text-indigo-800')} font-semibold">${item.type}</span>
               </div>
               <div class="text-[11px] text-slate-500 mt-0.5">${item.className}班 | ${item.subjectA} 與 ${item.subjectB}</div>
               <div class="text-[10px] text-slate-400 font-mono">${item.origSlot} ➔ ${item.targetSlot}</div>
@@ -1577,9 +1758,18 @@
             <div>${item.note || ''}</div>
           </div>
         `;
+      } else if (item.isTutorialSwap) {
+        chainedNote = `
+          <div class="p-3 rounded-lg bg-sky-50 border border-sky-200 text-sky-900 text-xs mb-4">
+            <div class="font-bold flex items-center gap-1 mb-1">
+              <i class="ph ph-info"></i> 第 10 節導修專案互換說明：
+            </div>
+            <div>雙方教師經協商同意，互換第 10 節功課輔導／導修看管職務（支援跨班級互換），學生作息與常規學科進度不受影響。</div>
+          </div>
+        `;
       }
 
-      lastGeneratedSlipText = `【學校調課通知單】\n編號：${item.id}\n類別：${item.type}\n申請科任：${item.teacherA}\n受調科任：${item.teacherB}\n任教班別：${item.className}班\n調動明細：${item.origSlot} (${item.subjectA}) ⇄ ${item.targetSlot} (${item.subjectB})\n日期：${item.date}${item.linkedSlipId ? '\n關聯單號：' + item.linkedSlipId : ''}`;
+      lastGeneratedSlipText = `【學校調課通知單】\n編號：${item.id}\n類別：${item.type}\n申請科任：${item.teacherA}\n受調科任：${item.teacherB}\n任教班別：${item.className}班\n調動明細：${item.origSlot} ⇄ ${item.targetSlot}\n日期：${item.date}${item.linkedSlipId ? '\n關聯單號：' + item.linkedSlipId : ''}`;
 
       printableArea.innerHTML = `
         <div class="max-w-2xl mx-auto border-2 border-slate-800 p-6 sm:p-8 rounded-xl bg-white space-y-6">
@@ -1599,15 +1789,15 @@
               <thead>
                 <tr class="bg-slate-100 font-bold border-b border-slate-800">
                   <th class="p-2 border-r border-slate-800">項目</th>
-                  <th class="p-2 border-r border-slate-800">原課節 (調出)</th>
-                  <th class="p-2">互換新課節 (受調)</th>
+                  <th class="p-2 border-r border-slate-800">原課節 (申請方)</th>
+                  <th class="p-2">互換新課節 (受調方)</th>
                 </tr>
               </thead>
               <tbody class="divide-y border-b border-slate-800">
                 <tr>
                   <td class="p-2 font-bold border-r border-slate-800 bg-slate-50">任教班別</td>
-                  <td class="p-2 border-r border-slate-800 font-bold">${item.className} 班</td>
-                  <td class="p-2 font-bold">${item.className} 班</td>
+                  <td class="p-2 border-r border-slate-800 font-bold">${item.classA || item.className} 班</td>
+                  <td class="p-2 font-bold">${item.classB || item.className} 班</td>
                 </tr>
                 <tr>
                   <td class="p-2 font-bold border-r border-slate-800 bg-slate-50">科任教師</td>
