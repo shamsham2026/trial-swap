@@ -1397,6 +1397,52 @@
       finishSwapAction(record);
     }
 
+    function executeDirectCover(srcId, coverTeacher) {
+      const lesson = currentTimetable.find(r => r.id === srcId);
+      if (!lesson) return;
+
+      const recordId = 'COVER_' + Date.now();
+      const origTeachers = [...lesson.teachers];
+      const origTeacherStr = lesson.teacher;
+
+      const movement = {
+        lessonId: lesson.id,
+        isCover: true,
+        fromTeachers: origTeachers,
+        toTeachers: [coverTeacher]
+      };
+
+      lesson.teachers = [coverTeacher];
+      lesson.teacher = coverTeacher;
+      lesson.isCovered = true;
+      lesson.originalTeachers = origTeachers;
+      lesson.swapSlipId = recordId;
+
+      const record = {
+        id: recordId,
+        date: new Date().toLocaleDateString('zh-HK'),
+        type: `${lesson.subject}代課指派`,
+        teacherA: origTeacherStr,
+        teacherB: coverTeacher,
+        className: lesson.className,
+        classA: lesson.className,
+        classB: lesson.className,
+        subjectA: lesson.subject,
+        subjectB: `${lesson.subject} (代課看管)`,
+        origSlot: `${lesson.day} ${getSlotCleanTitle(lesson.period)}`,
+        targetSlot: `${lesson.day} ${getSlotCleanTitle(lesson.period)} (現場代課)`,
+        isDouble: false,
+        isCoTeaching: false,
+        isCoverRecord: true,
+        movements: [movement],
+        chained: false,
+        note: `原負責教師 ${origTeacherStr} 因校務調堂，該節 ${lesson.className}班 ${lesson.subject} 由 ${coverTeacher} 老師代為看管輔導。`
+      };
+
+      swapHistory.unshift(record);
+      finishSwapAction(record);
+    }
+
     function executeChainedSwap(srcId, destId, conflictBId, candidateCId) {
       const src = currentTimetable.find(r => r.id === srcId);
       const dest = currentTimetable.find(r => r.id === destId);
@@ -1507,9 +1553,11 @@
         item.movements.forEach(m => {
           const lesson = currentTimetable.find(r => r.id === m.lessonId);
           if (lesson) {
-            if (m.isTeacherSwap) {
+            if (m.isCover || m.isTeacherSwap) {
               lesson.teachers = [...m.fromTeachers];
               lesson.teacher = m.fromTeachers.join(' & ');
+              lesson.isCovered = false;
+              lesson.originalTeachers = null;
             } else {
               lesson.day = m.fromDay;
               lesson.period = m.fromPeriod;
