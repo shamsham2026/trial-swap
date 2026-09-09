@@ -364,7 +364,7 @@
             </div>
             <div>
               <p class="font-bold text-slate-800 text-sm">點擊選擇檔案 或 拖放至此處</p>
-              <p class="text-slate-500 text-[11px] mt-0.5">支援 2627_科任上課紙表.xlsx / .xls</p>
+              <p class="text-slate-500 text-[11px] mt-0.5">支援 2627_全體科任上課總表app.xlsx / .xls</p>
             </div>
             <input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleExcelFileUpload(event)">
           </div>
@@ -449,13 +449,13 @@
       { key: 'S03', cleanLabel: '班主任節', time: '08:15 - 08:35', type: 'lesson' },
       { key: 'S04', cleanLabel: '第 1 節', time: '08:35 - 09:10', type: 'lesson' },
       { key: 'S05', cleanLabel: '第 2 節', time: '09:10 - 09:45', type: 'lesson' },
-      { key: 'S06', cleanLabel: '第 1 小息', time: '09:45 - 10:05', type: 'duty' },
+      { key: 'S06', cleanLabel: '小 息 1', time: '09:45 - 10:05', type: 'duty' },
       { key: 'S07', cleanLabel: '第 3 節', time: '10:05 - 10:40', type: 'lesson' },
       { key: 'S08', cleanLabel: '第 4 節', time: '10:40 - 11:15', type: 'lesson' },
-      { key: 'S09', cleanLabel: '第 2 小息', time: '11:15 - 11:30', type: 'duty' },
+      { key: 'S09', cleanLabel: '小 息 2', time: '11:15 - 11:30', type: 'duty' },
       { key: 'S10', cleanLabel: '第 5 節', time: '11:30 - 12:05', type: 'lesson' },
       { key: 'S11', cleanLabel: '第 6 節', time: '12:05 - 12:40', type: 'lesson' },
-      { key: 'S12', cleanLabel: '午膳', time: '12:40 - 13:20', type: 'duty' },
+      { key: 'S12', cleanLabel: '午   膳', time: '12:40 - 13:20', type: 'duty' },
       { key: 'S13', cleanLabel: '午息當值', time: '13:20 - 13:50', type: 'duty' },
       { key: 'S14', cleanLabel: '第 7 節', time: '13:50 - 14:25', type: 'lesson' },
       { key: 'S15', cleanLabel: '第 8 節', time: '14:25 - 15:00', type: 'lesson' },
@@ -469,7 +469,7 @@
       return slot ? slot.cleanLabel : periodKey;
     }
 
-    // Check if a slot is a Period 10 Tutorial (第 10 節 導修 / 功課輔導)
+    // Check if a slot is a Period 10 Tutorial (第 10 節 導修)
     function isPeriod10Tutorial(lesson) {
       if (!lesson) return false;
       const isP10 = lesson.period === 'S17';
