@@ -742,9 +742,10 @@
               `;
             } else {
               const doubleBadge = slotItem.isDouble ? '<span class="inline-block px-1 py-0.2 text-[9px] rounded bg-indigo-100 text-indigo-800 font-bold ml-1">雙教節</span>' : '';
+              const swappedBadge = slotItem.isSwapped ? '<span class="inline-block px-1 py-0.2 text-[9px] rounded bg-emerald-100 text-emerald-800 font-bold ml-1 border border-emerald-300">已調</span>' : '';
               html += `
-                <td class="p-2 border-r border-slate-200 text-center hover:bg-slate-100/60 transition">
-                  <div class="font-bold text-slate-800">${mode === 'class' ? slotItem.subject : slotItem.className + ' ' + slotItem.subject} ${doubleBadge}</div>
+                <td class="p-2 border-r border-slate-200 text-center hover:bg-slate-100/60 transition ${slotItem.isSwapped ? 'bg-emerald-50/40' : ''}">
+                  <div class="font-bold text-slate-800">${mode === 'class' ? slotItem.subject : slotItem.className + ' ' + slotItem.subject} ${doubleBadge} ${swappedBadge}</div>
                   <div class="text-[10px] text-slate-500">${mode === 'class' ? slotItem.teacher : slotItem.subject}</div>
                 </td>
               `;
@@ -941,12 +942,18 @@
       if (!conflictA && conflictB && !conflictB.isDuty) {
         // Teacher B is teaching another class (conflictB.className) at srcLesson.period
         const classD = conflictB.className;
-        const candidateC = currentTimetable.find(r => 
-          r.day === srcLesson.day && 
-          r.className === classD && 
-          r.teacher !== teacherB && 
-          !r.isDuty
-        );
+        
+        // Find a candidate C in class D whose swap with B creates no conflict for either party
+        const candidateC = currentTimetable.find(r => {
+          if (r.day !== srcLesson.day || r.className !== classD || r.teacher === teacherB || r.isDuty) return false;
+          
+          // Check: Is Teacher C free at conflictB.period (except candidate lesson itself)?
+          const conflictCAtSrc = currentTimetable.some(x => x.day === conflictB.day && x.period === conflictB.period && x.teacher === r.teacher && x.id !== r.id);
+          // Check: Is Teacher B free at r.period (except conflictB itself)?
+          const conflictBAtCand = currentTimetable.some(x => x.day === r.day && x.period === r.period && x.teacher === teacherB && x.id !== conflictB.id);
+
+          return !conflictCAtSrc && !conflictBAtCand;
+        });
 
         if (candidateC) {
           resultBox.className = 'rounded-xl p-4 text-xs border bg-amber-50 border-amber-200 text-amber-900 space-y-3';
@@ -954,19 +961,28 @@
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2 font-bold text-amber-800 text-sm">
                 <i class="ph ph-git-merge text-lg"></i>
-                <span>發現三方連鎖調換方案 (科任先對調後讓堂)</span>
+                <span>發現三方連鎖調換方案（必須先立案記錄前置讓堂，再執行主調課）</span>
               </div>
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200 text-amber-900">連鎖對調</span>
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200 text-amber-900">兩階段連鎖對調</span>
             </div>
 
-            <div class="text-[11px] text-amber-800 leading-relaxed bg-white/70 p-3 rounded-xl border border-amber-200/60 space-y-1.5">
-              <p><strong>情況說明：</strong> ${teacherB} 在 ${srcLesson.day} ${DAILY_18_SLOTS.find(s=>s.key===srcLesson.period)?.label} 需任教 <strong>${classD}班 (${conflictB.subject})</strong>。</p>
-              <p><strong>連鎖方案：</strong> ${teacherB} 可先在 ${classD}班 與 <strong>${candidateC.teacher}</strong> 對調課節騰出空節，再與 <strong>${teacherA}</strong> 完成調課！</p>
+            <div class="text-[11px] text-amber-900 leading-relaxed bg-white/80 p-3 rounded-xl border border-amber-200 space-y-2">
+              <p><strong>衝突診斷：</strong> 受調教師 <strong>${teacherB}</strong> 在 ${srcLesson.day} ${DAILY_18_SLOTS.find(s=>s.key===srcLesson.period)?.label} 原需任教 <strong>${classD}班 (${conflictB.subject})</strong>，因此原本無法直接與您對調。</p>
+              
+              <div class="p-2.5 rounded-lg bg-amber-100/60 border border-amber-200 text-amber-950 space-y-1">
+                <div class="font-bold flex items-center gap-1">
+                  <i class="ph ph-arrows-down-up"></i> 系統排程連動方案：
+                </div>
+                <div><strong>【第 1 階段・前置讓堂】：</strong> ${teacherB} 先與 ${classD}班 <strong>${candidateC.teacher} (${candidateC.subject})</strong> 互調，並正式存檔記錄，騰出該節空堂。</div>
+                <div><strong>【第 2 階段・主調課生效】：</strong> 前置紀錄確認後，${teacherB} 與 <strong>${teacherA}</strong> 於 ${srcLesson.className}班 順利完成調課。</div>
+              </div>
+              <p class="text-[10px] text-slate-500">* 確認後系統將自動依序建立 2 份正式調課紙與調課紀錄，確保教務處存檔與責任追溯完整合規。</p>
             </div>
 
             <div class="flex justify-end pt-1">
               <button onclick="executeChainedSwap('${srcLesson.id}', '${destLesson.id}', '${conflictB.id}', '${candidateC.id}')" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 active:scale-95 text-white font-bold rounded-xl shadow-sm transition flex items-center gap-1.5">
-                <i class="ph ph-check"></i> 確認三方連鎖調課並輸出聯動調課紙
+                <i class="ph ph-check-square-offset text-sm"></i>
+                <span>確認依序登記兩階段調課（產出雙聯調課紙並生效課表）</span>
               </button>
             </div>
           `;
@@ -1004,15 +1020,21 @@
       const srcPartner = getDoublePartner(src);
       const destPartner = getDoublePartner(dest);
 
+      const recordId = 'SLIP_' + Date.now();
+
       // Perform swap of day and period
       const origDay = src.day;
       const origPeriod = src.period;
 
       src.day = dest.day;
       src.period = dest.period;
+      src.isSwapped = true;
+      src.swapSlipId = recordId;
 
       dest.day = origDay;
       dest.period = origPeriod;
+      dest.isSwapped = true;
+      dest.swapSlipId = recordId;
 
       // Handle double partner pairs if present
       if (srcPartner && destPartner) {
@@ -1021,14 +1043,18 @@
 
         srcPartner.day = destPartner.day;
         srcPartner.period = destPartner.period;
+        srcPartner.isSwapped = true;
+        srcPartner.swapSlipId = recordId;
 
         destPartner.day = pOrigDay;
         destPartner.period = pOrigPeriod;
+        destPartner.isSwapped = true;
+        destPartner.swapSlipId = recordId;
       }
 
       // Record History
       const record = {
-        id: 'SLIP_' + Date.now(),
+        id: recordId,
         date: new Date().toLocaleDateString('zh-HK'),
         type: '直接調課',
         teacherA: src.teacher,
@@ -1054,26 +1080,70 @@
 
       if (!src || !dest || !confB || !candC) return;
 
-      // Step 1: Swap B and C in class D
+      const now = Date.now();
+      const preSlipId = 'SLIP_CHAIN1_' + now;
+      const mainSlipId = 'SLIP_CHAIN2_' + (now + 1);
+
+      // ==========================================
+      // STEP 1: Execute & Record Precedent Swap (B ⇄ C in Class D)
+      // ==========================================
       const origBDay = confB.day;
       const origBPeriod = confB.period;
-      confB.day = candC.day;
-      confB.period = candC.period;
+      const origCDay = candC.day;
+      const origCPeriod = candC.period;
+
+      confB.day = origCDay;
+      confB.period = origCPeriod;
+      confB.isSwapped = true;
+      confB.swapSlipId = preSlipId;
+
       candC.day = origBDay;
       candC.period = origBPeriod;
+      candC.isSwapped = true;
+      candC.swapSlipId = preSlipId;
 
-      // Step 2: Swap A and B in target class
+      const preRecord = {
+        id: preSlipId,
+        date: new Date().toLocaleDateString('zh-HK'),
+        type: '三方連鎖調課 (第1階段・前置讓堂)',
+        stage: 1,
+        linkedSlipId: mainSlipId,
+        teacherA: confB.teacher,
+        teacherB: candC.teacher,
+        className: confB.className,
+        subjectA: confB.subject,
+        subjectB: candC.subject,
+        origSlot: `${origBDay} ${DAILY_18_SLOTS.find(s=>s.key===origBPeriod)?.label}`,
+        targetSlot: `${origCDay} ${DAILY_18_SLOTS.find(s=>s.key===origCPeriod)?.label}`,
+        isDouble: confB.isDouble || candC.isDouble,
+        chained: true,
+        note: `本紀錄為前置讓堂調課：${confB.teacher} 於 ${confB.className}班 與 ${candC.teacher} 先行對調次序，以騰空節數支援 ${src.className}班 之後續調課。`
+      };
+
+      // ==========================================
+      // STEP 2: Execute & Record Main Swap (A ⇄ B in Class C)
+      // ==========================================
       const origADay = src.day;
       const origAPeriod = src.period;
-      src.day = dest.day;
-      src.period = dest.period;
+      const origDestDay = dest.day;
+      const origDestPeriod = dest.period;
+
+      src.day = origDestDay;
+      src.period = origDestPeriod;
+      src.isSwapped = true;
+      src.swapSlipId = mainSlipId;
+
       dest.day = origADay;
       dest.period = origAPeriod;
+      dest.isSwapped = true;
+      dest.swapSlipId = mainSlipId;
 
-      const record = {
-        id: 'SLIP_' + Date.now(),
+      const mainRecord = {
+        id: mainSlipId,
         date: new Date().toLocaleDateString('zh-HK'),
-        type: '三方連鎖調課',
+        type: '三方連鎖調課 (第2階段・主調課生效)',
+        stage: 2,
+        linkedSlipId: preSlipId,
         teacherA: src.teacher,
         teacherB: dest.teacher,
         teacherC: candC.teacher,
@@ -1082,13 +1152,21 @@
         subjectA: src.subject,
         subjectB: dest.subject,
         origSlot: `${origADay} ${DAILY_18_SLOTS.find(s=>s.key===origAPeriod)?.label}`,
-        targetSlot: `${src.day} ${DAILY_18_SLOTS.find(s=>s.key===src.period)?.label}`,
+        targetSlot: `${origDestDay} ${DAILY_18_SLOTS.find(s=>s.key===origDestPeriod)?.label}`,
         isDouble: src.isDouble || dest.isDouble,
-        chained: true
+        chained: true,
+        note: `前置依據：受調教師 ${dest.teacher} 已透過單號 [${preSlipId}] 於 ${confB.className}班 完成讓堂，本主調課順利生效。`
       };
 
-      swapHistory.unshift(record);
-      finishSwapAction(record);
+      // Save both records into the history system sequentially
+      swapHistory.unshift(mainRecord);
+      swapHistory.unshift(preRecord);
+
+      showGlobalMsg('三方連鎖調課兩階段已依序登記並更新課表！已產出雙聯調課通知單。', 'success');
+      resetQuickSwap();
+      renderTimetableGrid();
+      renderHistoryList();
+      openSlipModal(mainRecord);
     }
 
     function finishSwapAction(record) {
@@ -1126,10 +1204,11 @@
           <div class="space-y-0.5">
             <div class="flex items-center gap-1.5">
               <span class="font-bold text-slate-800">${item.teacherA} ⇄ ${item.teacherB}</span>
-              <span class="px-1.5 py-0.2 rounded text-[10px] ${item.chained ? 'bg-amber-100 text-amber-800' : 'bg-indigo-100 text-indigo-800'} font-semibold">${item.type}</span>
+              <span class="px-1.5 py-0.2 rounded text-[10px] ${item.chained ? (item.stage === 1 ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800') : 'bg-indigo-100 text-indigo-800'} font-semibold">${item.type}</span>
             </div>
             <div class="text-[11px] text-slate-500">${item.className}班 | ${item.subjectA} 與 ${item.subjectB}</div>
             <div class="text-[10px] text-slate-400 font-mono">${item.origSlot} ➔ ${item.targetSlot}</div>
+            ${item.linkedSlipId ? `<div class="text-[9px] text-amber-700 font-semibold font-mono">🔗 關聯調課單號：${item.linkedSlipId}</div>` : ''}
           </div>
           <button onclick='openSlipModalById("${item.id}")' class="px-2.5 py-1.5 bg-white hover:bg-indigo-50 text-indigo-700 border border-slate-200 rounded-lg font-semibold text-[11px] shadow-2xs transition flex items-center gap-1">
             <i class="ph ph-printer"></i> 調課紙
@@ -1150,15 +1229,16 @@
       if (item.chained) {
         chainedNote = `
           <div class="p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-xs mb-4">
-            <div class="font-bold flex items-center gap-1 mb-1">
-              <i class="ph ph-info"></i> 三方連鎖讓堂前置協議：
+            <div class="font-bold flex items-center justify-between mb-1">
+              <span class="flex items-center gap-1"><i class="ph ph-git-commit"></i> 三方連鎖調課法定依據 (${item.stage === 1 ? '第 1 階段：前置讓堂紀錄' : '第 2 階段：主調課生效紀錄'})：</span>
+              ${item.linkedSlipId ? `<button onclick="openSlipModalById('${item.linkedSlipId}')" class="text-[10px] text-indigo-700 underline hover:text-indigo-900 font-mono">檢視關聯調課單 (${item.linkedSlipId})</button>` : ''}
             </div>
-            ${item.teacherB} 已先於 ${item.classD}班 與 ${item.teacherC} 對調課堂次序，以騰出空節完成本次 ${item.className}班 之課堂對調。
+            <div>${item.note || ''}</div>
           </div>
         `;
       }
 
-      lastGeneratedSlipText = `【調課通知單】\n編號：${item.id}\n申請教師：${item.teacherA}\n受調教師：${item.teacherB}\n班別：${item.className}\n調動：${item.origSlot} (${item.subjectA}) 與 ${item.targetSlot} (${item.subjectB}) 互換上課次序\n生效日期：${item.date}`;
+      lastGeneratedSlipText = `【調課通知單】\n編號：${item.id}\n類別：${item.type}\n申請教師：${item.teacherA}\n受調教師：${item.teacherB}\n班別：${item.className}\n調動：${item.origSlot} (${item.subjectA}) 與 ${item.targetSlot} (${item.subjectB}) 互換上課次序\n生效日期：${item.date}${item.linkedSlipId ? '\n關聯單號：' + item.linkedSlipId : ''}`;
 
       printableArea.innerHTML = `
         <div class="max-w-2xl mx-auto border-2 border-slate-800 p-6 sm:p-8 rounded-xl bg-white space-y-6">
