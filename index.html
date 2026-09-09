@@ -1450,6 +1450,8 @@
 
         const newRecords = parseExcelData(rawSheetData);
         currentTimetable = newRecords;
+        initialBaseTimetable = JSON.parse(JSON.stringify(newRecords));
+        swapHistory = [];
         updateMetadataAndDropdowns();
         renderTimetableGrid();
         closeImportModal();
@@ -1462,9 +1464,13 @@
 
     function loadSampleDemoTimetable() {
       currentTimetable = generateDemoTimetable();
+      initialBaseTimetable = JSON.parse(JSON.stringify(currentTimetable));
+      swapHistory = [];
       updateMetadataAndDropdowns();
       renderTimetableGrid();
-      closeImportModal();
+      if (document.getElementById('import-modal').classList.contains('flex')) {
+        closeImportModal();
+      }
       showGlobalMsg('已載入內建 18 節全校示範課表！', 'info');
     }
 
