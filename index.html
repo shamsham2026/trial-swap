@@ -372,1075 +372,281 @@
     let activeImportTab = 'file';
     let pendingImportData = null;
 
-    // Standard school periods
+    // Standard school periods (Exactly 18 periods per day including duties and teaching periods)
     const DAYS_ORDER = ['星期一', '星期二', '星期三', '星期四', '星期五'];
-    const PERIOD_LABELS = {
-      'DUTY_AM': '早上當值 (08:00 - 08:30)',
-      'P1': '第 1 節 (08:30 - 09:05)',
-      'P2': '第 2 節 (09:05 - 09:40)',
-      'P3': '第 3 節 (09:55 - 10:30)',
-      'P4': '第 4 節 (10:30 - 11:05)',
-      'P5': '第 5 節 (11:20 - 11:55)',
-      'P6': '第 6 節 (12:35 - 13:10)',
-      'P7': '第 7 節 (13:10 - 13:45)',
-      'P8': '第 8 節 (14:00 - 14:35)',
-      'DUTY_PM': '放學當值 (14:40 - 15:15)'
-    };
+    
+    // Complete 18-Slot Specification per day
+    const DAILY_18_SLOTS = [
+      { key: 'S01', label: '1. 早上當值 (7:30-8:15)', time: '07:30 - 08:15', type: 'duty' },
+      { key: 'S02', label: '2. 早上當值 (7:45-8:15)', time: '07:45 - 08:15', type: 'duty' },
+      { key: 'S03', label: '3. 班主任節', time: '08:15 - 08:35', type: 'lesson' },
+      { key: 'S04', label: '4. 第 1 節', time: '08:35 - 09:10', type: 'lesson' },
+      { key: 'S05', label: '5. 第 2 節', time: '09:10 - 09:45', type: 'lesson' },
+      { key: 'S06', label: '6. 第 1 小息', time: '09:45 - 10:05', type: 'duty' },
+      { key: 'S07', label: '7. 第 3 節', time: '10:05 - 10:40', type: 'lesson' },
+      { key: 'S08', label: '8. 第 4 節', time: '10:40 - 11:15', type: 'lesson' },
+      { key: 'S09', label: '9. 第 2 小息', time: '11:15 - 11:30', type: 'duty' },
+      { key: 'S10', label: '10. 第 5 節', time: '11:30 - 12:05', type: 'lesson' },
+      { key: 'S11', label: '11. 第 6 節', time: '12:05 - 12:40', type: 'lesson' },
+      { key: 'S12', label: '12. 午膳', time: '12:40 - 13:20', type: 'duty' },
+      { key: 'S13', label: '13. 午息當值', time: '13:20 - 13:50', type: 'duty' },
+      { key: 'S14', label: '14. 第 7 節', time: '13:50 - 14:25', type: 'lesson' },
+      { key: 'S15', label: '15. 第 8 節', time: '14:25 - 15:00', type: 'lesson' },
+      { key: 'S16', label: '16. 第 9 節', time: '15:00 - 15:35', type: 'lesson' },
+      { key: 'S17', label: '17. 第 10 節', time: '15:35 - 16:10', type: 'lesson' },
+      { key: 'S18', label: '18. 放學當值', time: '16:10 - 16:35', type: 'duty' }
+    ];
+
+    const PERIOD_LABELS = {};
+    DAILY_18_SLOTS.forEach(s => {
+      PERIOD_LABELS[s.key] = `${s.label} (${s.time})`;
+    });
 
     function generateDemoTimetable() {
-      // Teachers
       const teachers = ['黃志文老師', '張海倫老師', '陳秀芬老師', '李偉民老師', '王若愚老師', 'Mr. Roberts', '郭靜敏老師'];
-      const classes = ['4B', '4A', '5A', '6B'];
-
-      // Build realistic schedule matching standard Hong Kong school
       const records = [];
 
-      // Helper to add slot
-      function addSlot(day, period, cls, subject, teacher, isDouble = false, doublePair = null) {
+      function addRecord(day, slotKey, cls, subject, teacher, isDouble = false, doublePair = null, isDuty = false) {
         records.push({
           id: 'slot_' + Math.random().toString(36).substr(2, 9),
           day: day,
-          period: period,
+          period: slotKey,
           className: cls,
           subject: subject,
           teacher: teacher,
           isDouble: isDouble,
-          doublePair: doublePair // e.g. 'P4'
+          doublePair: doublePair,
+          isDuty: isDuty
         });
       }
 
-      // Monday (4B Timetable setup)
-      // 黄志文老師: 4B 數學連堂 (P3-P4)
-      addSlot('星期一', 'P1', '4B', '中文', '陳秀芬老師', false);
-      addSlot('星期一', 'P2', '4B', '英文', 'Mr. Roberts', false);
-      addSlot('星期一', 'P3', '4B', '數學', '黃志文老師', true, 'P4');
-      addSlot('星期一', 'P4', '4B', '數學', '黃志文老師', true, 'P3');
-      addSlot('星期一', 'P5', '4B', '常識', '李偉民老師', false);
-      addSlot('星期一', 'P6', '4B', '視藝', '張海倫老師', true, 'P7');
-      addSlot('星期一', 'P7', '4B', '視藝', '張海倫老師', true, 'P6');
-      addSlot('星期一', 'P8', '4B', '體育', '郭靜敏老師', false);
+      DAYS_ORDER.forEach(day => {
+        // Daily Duties setup for the 18-slot structure
+        addRecord(day, 'S01', '全校', '早上當值(7:30-8:15)', day === '星期一' ? '黃志文老師' : '李偉民老師', false, null, true);
+        addRecord(day, 'S02', '全校', '早上當值(7:45-8:15)', day === '星期五' ? '陳秀芬老師' : '郭靜敏老師', false, null, true);
+        addRecord(day, 'S03', '4B', '班主任節', '陳秀芬老師', false);
+        addRecord(day, 'S06', '全校', '第1小息當值', '郭靜敏老師', false, null, true);
+        addRecord(day, 'S09', '全校', '第2小息當值', '陳秀芬老師', false, null, true);
+        addRecord(day, 'S12', '4B', '4B班午膳看管', '張海倫老師', false, null, true);
+        addRecord(day, 'S13', '全校', '午息當值', '王若愚老師', false, null, true);
+        addRecord(day, 'S18', '全校', '放學當值', day === '星期五' ? '黃志文老師' : '張海倫老師', false, null, true);
 
-      // Other classes on Monday to create rich conflicts & chain opportunities:
-      // 張海倫老師 in 4A on Monday P3 (collision example for chained swap!)
-      addSlot('星期一', 'P3', '4A', '視藝', '張海倫老師', false);
-      addSlot('星期一', 'P5', '4A', '中文', '王若愚老師', false);
+        if (day === '星期一') {
+          // Monday 4B schedule:
+          // S04-S05 (第1-2節): 數學連堂 (黃志文老師)
+          addRecord(day, 'S04', '4B', '數學', '黃志文老師', true, 'S05');
+          addRecord(day, 'S05', '4B', '數學', '黃志文老師', true, 'S04');
+          // S07-S08 (第3-4節): 英文 (Mr. Roberts) & 中文 (陳秀芬老師)
+          addRecord(day, 'S07', '4B', '中文', '陳秀芬老師', false);
+          addRecord(day, 'S08', '4B', '英文', 'Mr. Roberts', false);
+          // S10-S11 (第5-6節): 視藝連堂 (張海倫老師)
+          addRecord(day, 'S10', '4B', '視藝', '張海倫老師', true, 'S11');
+          addRecord(day, 'S11', '4B', '視藝', '張海倫老師', true, 'S10');
+          // S14-S17 (第7-10節): 常識、音樂、體育、導修
+          addRecord(day, 'S14', '4B', '常識', '李偉民老師', false);
+          addRecord(day, 'S15', '4B', '音樂', '王若愚老師', false);
+          addRecord(day, 'S16', '4B', '體育', '郭靜敏老師', false);
+          addRecord(day, 'S17', '4B', '功課輔導', '黃志文老師', false);
 
-      // Tuesday (4B Timetable setup - for cross-day swaps)
-      addSlot('星期二', 'P1', '4B', '數學', '黃志文老師', false);
-      addSlot('星期二', 'P2', '4B', '中文', '陳秀芬老師', true, 'P3');
-      addSlot('星期二', 'P3', '4B', '中文', '陳秀芬老師', true, 'P2');
-      addSlot('星期二', 'P4', '4B', '音樂', '王若愚老師', false);
-      addSlot('星期二', 'P5', '4B', '英文', 'Mr. Roberts', false);
-      addSlot('星期二', 'P6', '4B', '常識', '李偉民老師', false);
-      addSlot('星期二', 'P7', '4B', '電腦', '郭靜敏老師', false);
-
-      // Wednesday to Friday general classes
-      DAYS_ORDER.slice(2).forEach((day, idx) => {
-        addSlot(day, 'P1', '4B', '英文', 'Mr. Roberts', false);
-        addSlot(day, 'P2', '4B', '數學', '黃志文老師', false);
-        addSlot(day, 'P3', '4B', '中文', '陳秀芬老師', false);
-        addSlot(day, 'P4', '4B', '常識', '李偉民老師', false);
-        addSlot(day, 'P6', '4B', '體育', '郭靜敏老師', false);
+          // Sample conflict: 張海倫老師 in 4A at S04
+          addRecord(day, 'S04', '4A', '視藝', '張海倫老師', false);
+        } else if (day === '星期二') {
+          // Tuesday 4B schedule
+          addRecord(day, 'S04', '4B', '中文', '陳秀芬老師', true, 'S05');
+          addRecord(day, 'S05', '4B', '中文', '陳秀芬老師', true, 'S04');
+          addRecord(day, 'S07', '4B', '數學', '黃志文老師', false);
+          addRecord(day, 'S08', '4B', '常識', '李偉民老師', false);
+          addRecord(day, 'S10', '4B', '英文', 'Mr. Roberts', false);
+          addRecord(day, 'S11', '4B', '音樂', '王若愚老師', false);
+          addRecord(day, 'S14', '4B', '體育', '郭靜敏老師', false);
+          addRecord(day, 'S15', '4B', '電腦', '李偉民老師', false);
+          addRecord(day, 'S16', '4B', '中文', '陳秀芬老師', false);
+          addRecord(day, 'S17', '4B', '數學補輔', '黃志文老師', false);
+        } else {
+          // Wed - Fri schedule distribution
+          addRecord(day, 'S04', '4B', '英文', 'Mr. Roberts', false);
+          addRecord(day, 'S05', '4B', '數學', '黃志文老師', false);
+          addRecord(day, 'S07', '4B', '中文', '陳秀芬老師', false);
+          addRecord(day, 'S08', '4B', '常識', '李偉民老師', false);
+          addRecord(day, 'S10', '4B', '體育', '郭靜敏老師', false);
+          addRecord(day, 'S11', '4B', '視藝', '張海倫老師', false);
+          addRecord(day, 'S14', '4B', '音樂', '王若愚老師', false);
+          addRecord(day, 'S15', '4B', '中文', '陳秀芬老師', false);
+          addRecord(day, 'S16', '4B', '英文', 'Mr. Roberts', false);
+          addRecord(day, 'S17', '4B', '導師週會', '陳秀芬老師', false);
+        }
       });
 
       return records;
     }
 
-    /**
-     * Parses a matrix format or flat list format into structured timetable array:
-     * Standard User Format:
-     * Row 1: 全校教師名單 (e.g. Header row: Column A is Day/Period, Column B is Teacher 1, Column C is Teacher 2...)
-     * Row 2...: 星期一早上當值 -> 星期五放學當值
-     */
     function parseExcelData(sheetData) {
       if (!sheetData || sheetData.length < 2) {
-        throw new Error('表格內容太少，無法識別有效課表。請確認內容包含教師名稱與課堂。');
+        throw new Error('表格內容太少，無法識別有效課表。請確認檔案包含教師姓名與課堂。');
       }
 
       const records = [];
-
-      // Determine structure orientation
-      // Test if Row 0 contains Teachers or Periods
       const row0 = sheetData[0] || [];
-      const col0 = sheetData.map(r => r[0] || '');
 
-      // Check if Row 0 has teachers (Orientation A)
-      const hasTeacherInRow0 = row0.some(c => typeof c === 'string' && (c.includes('老師') || c.includes('Mr') || c.includes('Ms') || c.length >= 2));
-      const hasPeriodInCol0 = col0.some(c => typeof c === 'string' && (c.includes('星期') || c.includes('節') || c.includes('當值') || c.includes('Day') || c.includes('P1') || c.includes('P2')));
+      // Detect teacher column start (Column 1 or Column 2 if Col 0 is Day & Col 1 is Period)
+      let teacherColStart = 1;
+      let dayColIndex = 0;
+      let periodColIndex = -1;
 
-      if (hasTeacherInRow0 && hasPeriodInCol0) {
-        // ORIENTATION A:
-        // Top row = Teachers (Col 1 to N)
-        // Col 0 = Day / Period / Duty
-        const teacherHeaders = [];
-        for (let col = 1; col < row0.length; col++) {
-          const tName = String(row0[col] || '').trim();
-          if (tName) {
-            teacherHeaders.push({ colIndex: col, teacher: tName });
-          }
-        }
+      // Check if Col 1 also looks like period headers or times
+      const sampleCol1 = String(sheetData[1] ? sheetData[1][1] : '').trim();
+      if (sampleCol1.includes('節') || sampleCol1.includes('當值') || sampleCol1.match(/^[0-9]+$/)) {
+        teacherColStart = 2;
+        periodColIndex = 1;
+      }
 
-        let currentDay = '星期一';
-        for (let rowIndex = 1; rowIndex < sheetData.length; rowIndex++) {
-          const row = sheetData[rowIndex];
-          if (!row || row.length === 0) continue;
-
-          const periodText = String(row[0] || '').trim();
-          if (!periodText) continue;
-
-          // Update current day if text mentions day
-          DAYS_ORDER.forEach(d => {
-            if (periodText.includes(d)) currentDay = d;
-          });
-
-          // Determine standardized period key
-          const periodKey = normalizePeriodKey(periodText);
-          if (!periodKey) continue; // Skip unmapped rows like lunch breaks
-
-          // Loop each teacher column
-          teacherHeaders.forEach(th => {
-            const cellValue = String(row[th.colIndex] || '').trim();
-            if (cellValue && cellValue !== '-' && cellValue !== '空' && cellValue !== '/') {
-              const parsedClassAndSubject = extractClassAndSubject(cellValue);
-              records.push({
-                id: 'slot_' + Math.random().toString(36).substr(2, 9),
-                day: currentDay,
-                period: periodKey,
-                rawPeriodText: periodText,
-                className: parsedClassAndSubject.className,
-                subject: parsedClassAndSubject.subject,
-                teacher: th.teacher,
-                isDouble: false,
-                doublePair: null
-              });
-            }
-          });
-        }
-      } else {
-        // Fallback: Check if it's a Flat CSV (班別, 教師, 科目, 節數, 星期)
-        const headerLower = row0.map(h => String(h || '').toLowerCase());
-        const classCol = headerLower.findIndex(h => h.includes('班') || h.includes('class'));
-        const teacherCol = headerLower.findIndex(h => h.includes('師') || h.includes('教') || h.includes('teacher'));
-        const subjectCol = headerLower.findIndex(h => h.includes('科') || h.includes('subject'));
-        const periodCol = headerLower.findIndex(h => h.includes('節') || h.includes('period'));
-        const dayCol = headerLower.findIndex(h => h.includes('日') || h.includes('星') || h.includes('day'));
-
-        if (classCol !== -1 && teacherCol !== -1) {
-          for (let r = 1; r < sheetData.length; r++) {
-            const row = sheetData[r];
-            if (!row || !row[classCol]) continue;
-            const cls = String(row[classCol]).trim();
-            const tch = String(row[teacherCol] || '').trim();
-            const subj = subjectCol !== -1 ? String(row[subjectCol] || '課堂').trim() : '課堂';
-            const rawPeriod = periodCol !== -1 ? String(row[periodCol] || 'P1').trim() : 'P1';
-            const day = dayCol !== -1 ? String(row[dayCol] || '星期一').trim() : '星期一';
-
-            records.push({
-              id: 'slot_' + Math.random().toString(36).substr(2, 9),
-              day: day,
-              period: normalizePeriodKey(rawPeriod) || 'P1',
-              className: cls,
-              subject: subj,
-              teacher: tch,
-              isDouble: false,
-              doublePair: null
-            });
-          }
-        } else {
-          // If neither, try direct cell mapping
-          throw new Error('未能識別表格欄位。請確保第一列為教師姓名，第一欄為課節（如：星期一 第1節 至 星期五 放學當值）。');
+      // Collect teacher headers
+      const teacherHeaders = [];
+      for (let col = teacherColStart; col < row0.length; col++) {
+        const tName = String(row0[col] || '').trim();
+        if (tName && tName !== '-' && tName !== '班別' && tName !== '時間') {
+          teacherHeaders.push({ colIndex: col, teacher: tName });
         }
       }
 
-      // Auto detect double periods (連堂)
+      if (teacherHeaders.length === 0) {
+        throw new Error('未能識別第一列的教師名單，請確保第一列為全校教師姓名。');
+      }
+
+      let currentDayIndex = 0;
+      let currentDay = DAYS_ORDER[0];
+      let dailyRowCounter = 0;
+
+      for (let rowIndex = 1; rowIndex < sheetData.length; rowIndex++) {
+        const row = sheetData[rowIndex];
+        if (!row || row.length === 0) continue;
+
+        // Extract day and period descriptions
+        let col0Text = String(row[0] || '').trim();
+        let col1Text = periodColIndex !== -1 ? String(row[periodColIndex] || '').trim() : '';
+        let fullPeriodText = (col0Text + ' ' + col1Text).trim();
+
+        if (!fullPeriodText && row.every(cell => !cell)) continue; // skip pure blank row
+
+        // Check if Day is explicitly written in col 0
+        let explicitDayFound = false;
+        DAYS_ORDER.forEach((d, idx) => {
+          if (col0Text.includes(d) || col0Text.includes(d.replace('星期', '周')) || col0Text.includes(d.replace('星期', ''))) {
+            currentDay = d;
+            currentDayIndex = idx;
+            explicitDayFound = true;
+          }
+        });
+
+        // Determine Slot Key (1 to 18)
+        let slotKey = normalizePeriodKey(fullPeriodText, dailyRowCounter % 18);
+
+        // If dailyRowCounter exceeds 18 and no explicit day tag, auto-advance day
+        if (!explicitDayFound && dailyRowCounter > 0 && dailyRowCounter % 18 === 0) {
+          currentDayIndex = Math.min(DAYS_ORDER.length - 1, Math.floor(dailyRowCounter / 18));
+          currentDay = DAYS_ORDER[currentDayIndex];
+        }
+
+        // Parse each teacher's assignment in this slot
+        teacherHeaders.forEach(th => {
+          const cellValue = String(row[th.colIndex] || '').trim();
+          if (cellValue && cellValue !== '-' && cellValue !== '空' && cellValue !== '/' && cellValue !== '0') {
+            const isDutySlot = cellValue.includes('當值') || cellValue.includes('Duty') || 
+                               slotKey === 'S01' || slotKey === 'S02' || slotKey === 'S06' || 
+                               slotKey === 'S09' || slotKey === 'S12' || slotKey === 'S13' || slotKey === 'S18';
+            const parsed = extractClassAndSubject(cellValue, isDutySlot);
+
+            records.push({
+              id: 'slot_' + Math.random().toString(36).substr(2, 9),
+              day: currentDay,
+              period: slotKey,
+              rawPeriodText: fullPeriodText,
+              className: parsed.className,
+              subject: parsed.subject,
+              teacher: th.teacher,
+              isDouble: false,
+              doublePair: null,
+              isDuty: isDutySlot
+            });
+          }
+        });
+
+        dailyRowCounter++;
+      }
+
+      // Auto detect consecutive double periods
       detectAndLinkDoublePeriods(records);
       return records;
     }
 
-    /**
-     * Extracts Class and Subject from cell text (e.g., "4B 數", "5A 英文", "當值")
-     */
-    function extractClassAndSubject(text) {
-      const clean = text.trim();
-      // Match pattern: [1-6][A-F] + optional space + Subject
-      const match = clean.match(/^([1-6][A-Za-z]|P\.?[1-6][A-Za-z]?)\s*(.*)$/i);
-      if (match) {
-        const cls = match[1].toUpperCase().replace('P.', '');
-        const subj = match[2].trim() || '課堂';
-        return { className: cls, subject: subj };
-      }
-      // If contains duty
-      if (clean.includes('當值') || clean.includes('Duty')) {
-        return { className: '全校', subject: clean };
-      }
-      return { className: '常規班', subject: clean };
-    }
-
-    /**
-     * Maps textual period descriptions to standard keys (P1..P8, DUTY_AM, DUTY_PM)
-     */
-    function normalizePeriodKey(text) {
+    function normalizePeriodKey(text, indexInDay = 0) {
       const t = text.trim();
-      if (t.includes('早') && t.includes('當值')) return 'DUTY_AM';
-      if (t.includes('放學') && t.includes('當值')) return 'DUTY_PM';
-      if (t.includes('第1節') || t.includes('第 1 節') || t === 'P1' || t.includes(' 1 ')) return 'P1';
-      if (t.includes('第2節') || t.includes('第 2 節') || t === 'P2' || t.includes(' 2 ')) return 'P2';
-      if (t.includes('第3節') || t.includes('第 3 節') || t === 'P3' || t.includes(' 3 ')) return 'P3';
-      if (t.includes('第4節') || t.includes('第 4 節') || t === 'P4' || t.includes(' 4 ')) return 'P4';
-      if (t.includes('第5節') || t.includes('第 5 節') || t === 'P5' || t.includes(' 5 ')) return 'P5';
-      if (t.includes('第6節') || t.includes('第 6 節') || t === 'P6' || t.includes(' 6 ')) return 'P6';
-      if (t.includes('第7節') || t.includes('第 7 節') || t === 'P7' || t.includes(' 7 ')) return 'P7';
-      if (t.includes('第8節') || t.includes('第 8 節') || t === 'P8' || t.includes(' 8 ')) return 'P8';
-      
-      const numMatch = t.match(/第?\s*([1-8])\s*節?/);
-      if (numMatch) return 'P' + numMatch[1];
-      return null;
+
+      // Duties & Homeroom matches
+      if (t.includes('7:30') || (t.includes('早上') && t.includes('7:30'))) return 'S01';
+      if (t.includes('7:45') || (t.includes('早上') && t.includes('7:45'))) return 'S02';
+      if (t.includes('班主任')) return 'S03';
+      if (t.includes('第1小息') || t.includes('第 1 小息') || (t.includes('第1') && t.includes('小息'))) return 'S06';
+      if (t.includes('第2小息') || t.includes('第 2 小息') || (t.includes('第2') && t.includes('小息'))) return 'S09';
+      if (t.includes('午膳') || t.includes('午餐')) return 'S12';
+      if (t.includes('午息') || t.includes('午間')) return 'S13';
+      if (t.includes('放學') && t.includes('當值')) return 'S18';
+
+      // 10 Teaching lessons matches
+      if (t.includes('第10節') || t.includes('第 10 節') || t.includes('第10課節')) return 'S17';
+      if (t.includes('第9節') || t.includes('第 9 節') || t.includes('第9課節')) return 'S16';
+      if (t.includes('第8節') || t.includes('第 8 節') || t.includes('第8課節')) return 'S15';
+      if (t.includes('第7節') || t.includes('第 7 節') || t.includes('第7課節')) return 'S14';
+      if (t.includes('第6節') || t.includes('第 6 節') || t.includes('第6課節')) return 'S11';
+      if (t.includes('第5節') || t.includes('第 5 節') || t.includes('第5課節')) return 'S10';
+      if (t.includes('第4節') || t.includes('第 4 節') || t.includes('第4課節')) return 'S08';
+      if (t.includes('第3節') || t.includes('第 3 節') || t.includes('第3課節')) return 'S07';
+      if (t.includes('第2節') || t.includes('第 2 節') || t.includes('第2課節')) return 'S05';
+      if (t.includes('第1節') || t.includes('第 1 節') || t.includes('第1課節')) return 'S04';
+
+      // Fallback by direct position in 18 slots
+      const clamped = Math.max(0, Math.min(17, indexInDay));
+      return DAILY_18_SLOTS[clamped].key;
     }
 
-    /**
-     * Automatically links consecutive periods for same class, subject, teacher into a double unit
-     */
     function detectAndLinkDoublePeriods(records) {
-      const periodOrder = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8'];
-      
-      for (let i = 0; i < records.length; i++) {
-        const a = records[i];
-        if (a.isDouble || !a.period.startsWith('P')) continue;
+      // Teaching lesson sequences that can form double periods within the 18-slot schedule:
+      // S04 & S05: 第 1 - 2 節
+      // S07 & S08: 第 3 - 4 節
+      // S10 & S11: 第 5 - 6 節
+      // S14 & S15: 第 7 - 8 節
+      // S16 & S17: 第 9 - 10 節
+      const teachingPairs = [
+        ['S04', 'S05'], // P1 - P2
+        ['S07', 'S08'], // P3 - P4
+        ['S10', 'S11'], // P5 - P6
+        ['S14', 'S15'], // P7 - P8
+        ['S16', 'S17']  // P9 - P10
+      ];
 
-        const pIdx = periodOrder.indexOf(a.period);
-        if (pIdx === -1 || pIdx >= periodOrder.length - 1) continue;
-        const nextPeriodKey = periodOrder[pIdx + 1];
+      teachingPairs.forEach(([first, second]) => {
+        records.forEach(a => {
+          if (a.isDouble || a.isDuty || a.period !== first) return;
 
-        // Find consecutive partner
-        const partner = records.find(b => 
-          b.day === a.day &&
-          b.period === nextPeriodKey &&
-          b.className === a.className &&
-          b.teacher === a.teacher &&
-          b.subject === a.subject &&
-          !b.isDouble
-        );
+          const partner = records.find(b => 
+            b.day === a.day &&
+            b.period === second &&
+            b.className === a.className &&
+            b.teacher === a.teacher &&
+            b.subject === a.subject &&
+            !b.isDouble &&
+            !b.isDuty
+          );
 
-        if (partner) {
-          a.isDouble = true;
-          a.doublePair = partner.period;
-          partner.isDouble = true;
-          partner.doublePair = a.period;
-        }
-      }
-    }
-
-    function openImportModal() {
-      document.getElementById('import-modal').classList.remove('hidden');
-      document.getElementById('import-modal').classList.add('flex');
-      clearModalAlert();
-    }
-
-    function closeImportModal() {
-      document.getElementById('import-modal').classList.remove('flex');
-      document.getElementById('import-modal').classList.add('hidden');
-    }
-
-    function switchImportTab(tab) {
-      activeImportTab = tab;
-      const fileBtn = document.getElementById('tab-btn-file');
-      const pasteBtn = document.getElementById('tab-btn-paste');
-      const filePanel = document.getElementById('panel-import-file');
-      const pastePanel = document.getElementById('panel-import-paste');
-
-      if (tab === 'file') {
-        fileBtn.className = 'flex-1 py-2 rounded-lg text-center bg-white text-indigo-700 shadow-xs transition';
-        pasteBtn.className = 'flex-1 py-2 rounded-lg text-center text-slate-600 hover:text-slate-900 transition';
-        filePanel.classList.remove('hidden');
-        pastePanel.classList.add('hidden');
-      } else {
-        pasteBtn.className = 'flex-1 py-2 rounded-lg text-center bg-white text-indigo-700 shadow-xs transition';
-        fileBtn.className = 'flex-1 py-2 rounded-lg text-center text-slate-600 hover:text-slate-900 transition';
-        pastePanel.classList.remove('hidden');
-        filePanel.classList.add('hidden');
-      }
-      clearModalAlert();
-    }
-
-    function showModalAlert(msg) {
-      const box = document.getElementById('modal-err-box');
-      box.textContent = msg;
-      box.classList.remove('hidden');
-    }
-
-    function clearModalAlert() {
-      const box = document.getElementById('modal-err-box');
-      box.textContent = '';
-      box.classList.add('hidden');
-    }
-
-    /**
-     * File upload handler for real .xlsx, .xls, .csv files using SheetJS
-     */
-    function handleExcelFileUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      clearModalAlert();
-      const reader = new FileReader();
-
-      reader.onload = function(e) {
-        try {
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: 'array' });
-          const firstSheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[firstSheetName];
-          const jsonGrid = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
-
-          if (!jsonGrid || jsonGrid.length === 0) {
-            showModalAlert('所選的 Excel 檔案為空或無法讀取');
-            return;
+          if (partner) {
+            a.isDouble = true;
+            a.doublePair = second;
+            partner.isDouble = true;
+            partner.doublePair = first;
           }
-
-          // Test parse
-          const parsed = parseExcelData(jsonGrid);
-          pendingImportData = parsed;
-
-          // Show feedback
-          const infoBox = document.getElementById('file-chosen-info');
-          const nameLabel = document.getElementById('file-name-label');
-          const recLabel = document.getElementById('file-records-label');
-
-          nameLabel.textContent = file.name;
-          recLabel.textContent = `成功辨識 ${parsed.length} 節課堂`;
-          infoBox.classList.remove('hidden');
-        } catch (err) {
-          console.error(err);
-          showModalAlert('解析 Excel 失敗：' + err.message);
-        }
-      };
-
-      reader.onerror = function() {
-        showModalAlert('讀取檔案失敗，請再試一次。');
-      };
-
-      reader.readAsArrayBuffer(file);
-    }
-
-    /**
-     * Process modal import submission
-     */
-    function processModalImport() {
-      try {
-        if (activeImportTab === 'file') {
-          if (!pendingImportData || pendingImportData.length === 0) {
-            showModalAlert('請先選擇並上傳 .xlsx 檔案！');
-            return;
-          }
-          applyLoadedTimetable(pendingImportData, '成功從 Excel 檔案載入課表！');
-        } else {
-          // Paste text
-          const text = document.getElementById('import-paste-textarea').value.trim();
-          if (!text) {
-            showModalAlert('請先貼上 Excel 表格內容！');
-            return;
-          }
-
-          // Parse tab-separated or comma-separated lines
-          const lines = text.split(/\r?\n/).map(line => {
-            if (line.includes('\t')) return line.split('\t');
-            return line.split(',');
-          });
-
-          const parsed = parseExcelData(lines);
-          applyLoadedTimetable(parsed, '成功從剪貼簿載入課表！');
-        }
-
-        closeImportModal();
-      } catch (err) {
-        showModalAlert('匯入失敗：' + err.message);
-      }
-    }
-
-    function loadSampleDemoTimetable() {
-      const demo = generateDemoTimetable();
-      applyLoadedTimetable(demo, '已載入標準示範課表 (4B班及全校科任)');
-      closeImportModal();
-    }
-
-    /**
-     * Applies loaded timetable into global state and re-populates UI
-     */
-    function applyLoadedTimetable(records, successMsg) {
-      currentTimetable = records;
-
-      // Extract unique teachers and classes
-      const teacherSet = new Set();
-      const classSet = new Set();
-
-      records.forEach(r => {
-        if (r.teacher) teacherSet.add(r.teacher);
-        if (r.className && r.className !== '全校') classSet.add(r.className);
-      });
-
-      teacherList = Array.from(teacherSet).sort();
-      classList = Array.from(classSet).sort();
-
-      // Update stat pill
-      const pill = document.getElementById('timetable-stat-pill');
-      const pillText = document.getElementById('stat-summary-text');
-      pill.classList.remove('hidden');
-      pillText.textContent = `已載入 ${records.length} 節課 (${teacherList.length} 位教師, ${classList.length} 班)`;
-
-      // Populate Quick Swap dropdowns
-      populateTeacherDropdown();
-
-      // Populate Timetable view filters
-      populateTimetableViewFilters();
-      renderTimetableGrid();
-
-      // Show toast
-      showGlobalBanner(successMsg || '課表已更新！', 'success');
-    }
-
-    function showGlobalBanner(text, type = 'info') {
-      const banner = document.getElementById('global-msg-banner');
-      banner.textContent = text;
-      banner.className = 'p-4 rounded-xl text-xs font-semibold border shadow-xs transition-all duration-300 ' + 
-        (type === 'success' ? 'bg-emerald-50 text-emerald-800 border-emerald-200 block' :
-         type === 'error' ? 'bg-red-50 text-red-800 border-red-200 block' : 'bg-indigo-50 text-indigo-800 border-indigo-200 block');
-
-      setTimeout(() => {
-        banner.classList.add('hidden');
-      }, 5000);
-    }
-
-    function populateTeacherDropdown() {
-      const sel = document.getElementById('quick-teacher-select');
-      sel.innerHTML = '<option value="">-- 請選擇教師 --</option>';
-
-      teacherList.forEach(t => {
-        const opt = document.createElement('option');
-        opt.value = t;
-        opt.textContent = t;
-        sel.appendChild(opt);
-      });
-
-      resetQuickSwap(false);
-    }
-
-    function handleTeacherSelectChange() {
-      const teacher = document.getElementById('quick-teacher-select').value;
-      const srcSel = document.getElementById('quick-src-slot');
-      const destSel = document.getElementById('quick-dest-slot');
-      const resultBox = document.getElementById('quick-swap-result-box');
-
-      resultBox.classList.add('hidden');
-      destSel.innerHTML = '<option value="">-- 請先選擇原課堂 --</option>';
-
-      if (!teacher) {
-        srcSel.innerHTML = '<option value="">-- 請先選擇申請教師 --</option>';
-        return;
-      }
-
-      // Filter all lessons taught by this teacher
-      const teacherLessons = currentTimetable.filter(r => r.teacher === teacher && r.period.startsWith('P'));
-
-      if (teacherLessons.length === 0) {
-        srcSel.innerHTML = '<option value="">該教師目前在課表中沒有任教節數</option>';
-        return;
-      }
-
-      srcSel.innerHTML = '<option value="">-- 請選擇要調出的課堂 --</option>';
-
-      // Sort by Day and Period
-      teacherLessons.sort((a, b) => {
-        const dDiff = DAYS_ORDER.indexOf(a.day) - DAYS_ORDER.indexOf(b.day);
-        if (dDiff !== 0) return dDiff;
-        return a.period.localeCompare(b.period);
-      });
-
-      teacherLessons.forEach(l => {
-        const opt = document.createElement('option');
-        opt.value = l.id;
-        const doubleTag = l.isDouble ? ` (雙教節: ${l.period}-${l.doublePair})` : '';
-        opt.textContent = `${l.day} ${PERIOD_LABELS[l.period] || l.period} | ${l.className} - ${l.subject}${doubleTag}`;
-        srcSel.appendChild(opt);
-      });
-    }
-
-    function handleSrcSlotChange() {
-      const slotId = document.getElementById('quick-src-slot').value;
-      const destSel = document.getElementById('quick-dest-slot');
-      const resultBox = document.getElementById('quick-swap-result-box');
-      resultBox.classList.add('hidden');
-
-      if (!slotId) {
-        destSel.innerHTML = '<option value="">-- 請先選擇原課堂 --</option>';
-        return;
-      }
-
-      const srcLesson = currentTimetable.find(r => r.id === slotId);
-      if (!srcLesson) return;
-
-      // Find all lessons for the SAME CLASS taught by OTHER teachers
-      const sameClassLessons = currentTimetable.filter(r => 
-        r.className === srcLesson.className && 
-        r.teacher !== srcLesson.teacher &&
-        r.period.startsWith('P')
-      );
-
-      destSel.innerHTML = '<option value="">-- 請選擇目標互換節數 --</option>';
-
-      // Sort: Same day first, then cross day
-      sameClassLessons.sort((a, b) => {
-        const aSameDay = a.day === srcLesson.day ? 0 : 1;
-        const bSameDay = b.day === srcLesson.day ? 0 : 1;
-        if (aSameDay !== bSameDay) return aSameDay - bSameDay;
-        const dDiff = DAYS_ORDER.indexOf(a.day) - DAYS_ORDER.indexOf(b.day);
-        if (dDiff !== 0) return dDiff;
-        return a.period.localeCompare(b.period);
-      });
-
-      sameClassLessons.forEach(target => {
-        const opt = document.createElement('option');
-        opt.value = target.id;
-        const isSameDay = target.day === srcLesson.day;
-        const dayTag = isSameDay ? '【當天】' : `【跨天: ${target.day}】`;
-        const doubleTag = target.isDouble ? ` (雙教節: ${target.period}-${target.doublePair})` : '';
-        opt.textContent = `${dayTag} ${target.period} 由 ${target.teacher} 任教 [${target.subject}]${doubleTag}`;
-        destSel.appendChild(opt);
-      });
-    }
-
-    function diagnoseAndExecuteQuickSwap() {
-      const teacher = document.getElementById('quick-teacher-select').value;
-      const srcId = document.getElementById('quick-src-slot').value;
-      const destId = document.getElementById('quick-dest-slot').value;
-      const resultBox = document.getElementById('quick-swap-result-box');
-
-      if (!teacher || !srcId || !destId) {
-        showGlobalBanner('請先完整選擇：1.申請教師、2.原課堂、3.調至哪一節', 'error');
-        return;
-      }
-
-      const srcLesson = currentTimetable.find(r => r.id === srcId);
-      const destLesson = currentTimetable.find(r => r.id === destId);
-
-      if (!srcLesson || !destLesson) {
-        showGlobalBanner('課堂記錄已失效，請重新選擇', 'error');
-        return;
-      }
-
-      // Collect complete units (handling double lesson locks)
-      const srcLessonsToMove = [srcLesson];
-      if (srcLesson.isDouble && srcLesson.doublePair) {
-        const pair = currentTimetable.find(r => 
-          r.day === srcLesson.day && 
-          r.period === srcLesson.doublePair && 
-          r.className === srcLesson.className && 
-          r.teacher === srcLesson.teacher
-        );
-        if (pair) srcLessonsToMove.push(pair);
-      }
-
-      const destLessonsToMove = [destLesson];
-      if (destLesson.isDouble && destLesson.doublePair) {
-        const pair = currentTimetable.find(r => 
-          r.day === destLesson.day && 
-          r.period === destLesson.doublePair && 
-          r.className === destLesson.className && 
-          r.teacher === destLesson.teacher
-        );
-        if (pair) destLessonsToMove.push(pair);
-      }
-
-      // Double lesson length match check
-      if (srcLessonsToMove.length !== destLessonsToMove.length) {
-        resultBox.className = 'rounded-xl p-4 text-xs border bg-amber-50 border-amber-200 text-amber-900 block space-y-2';
-        resultBox.innerHTML = `
-          <div class="flex items-center gap-2 font-bold text-amber-950">
-            <i class="ph ph-warning-circle text-base"></i>
-            <span>教節長度不匹配警告：</span>
-          </div>
-          <p>原課堂為 <strong>${srcLessonsToMove.length} 節</strong>，而目標課堂為 <strong>${destLessonsToMove.length} 節</strong>。</p>
-          <p class="text-[11px] text-amber-800">根據調課原則，雙教節必須成對互換以維護總課時及教學進度完整。請挑選相同節數單元的課堂對調。</p>
-        `;
-        return;
-      }
-
-      // 1. Direct Swap Collision Check:
-      // Can Teacher A teach in destLessons' slots? (i.e. does Teacher A teach ANY other class during dest period?)
-      const teacherAConflicts = [];
-      destLessonsToMove.forEach(dSlot => {
-        const collision = currentTimetable.find(r => 
-          r.teacher === srcLesson.teacher && 
-          r.day === dSlot.day && 
-          r.period === dSlot.period && 
-          r.id !== srcLesson.id && 
-          (!srcLesson.isDouble || r.id !== srcLesson.doublePair)
-        );
-        if (collision) teacherAConflicts.push(collision);
-      });
-
-      // Can Teacher B teach in srcLessons' slots? (i.e. does Teacher B teach ANY other class during src period?)
-      const teacherBConflicts = [];
-      srcLessonsToMove.forEach(sSlot => {
-        const collision = currentTimetable.find(r => 
-          r.teacher === destLesson.teacher && 
-          r.day === sSlot.day && 
-          r.period === sSlot.period && 
-          r.id !== destLesson.id && 
-          (!destLesson.isDouble || r.id !== destLesson.doublePair)
-        );
-        if (collision) teacherBConflicts.push(collision);
-      });
-
-      // Scenario 1: DIRECT SWAP IS 100% CLEAR!
-      if (teacherAConflicts.length === 0 && teacherBConflicts.length === 0) {
-        renderDirectSwapSuccess(srcLessonsToMove, destLessonsToMove);
-        return;
-      }
-
-      // Scenario 2: Teacher B has a collision in src period, but CAN WE DO A 3-WAY CHAINED SWAP?
-      // (B 先同他的科任對調，出現空節才和我調換)
-      if (teacherAConflicts.length === 0 && teacherBConflicts.length > 0) {
-        const chainSolution = solveChainedThreeWaySwap(srcLessonsToMove, destLessonsToMove, teacherBConflicts);
-        if (chainSolution) {
-          renderChainedSwapSuccess(srcLessonsToMove, destLessonsToMove, chainSolution);
-          return;
-        }
-      }
-
-      // Scenario 3: Hard Collisions (Cannot swap directly and no chained path)
-      renderSwapFailure(srcLessonsToMove, destLessonsToMove, teacherAConflicts, teacherBConflicts);
-    }
-
-    /**
-     * Solves 3-Way Chained Swap:
-     * Teacher B is busy in srcPeriod teaching Class X.
-     * Can Teacher B swap with another teacher C in Class X to vacate srcPeriod?
-     */
-    function solveChainedThreeWaySwap(srcLessons, destLessons, bCollisions) {
-      const teacherB = destLessons[0].teacher;
-      const collisionLesson = bCollisions[0]; // The lesson causing B to be busy in src period
-      const classX = collisionLesson.className;
-
-      // Find candidates in Class X who teach at another free time for B
-      const classXOtherLessons = currentTimetable.filter(r => 
-        r.className === classX && 
-        r.teacher !== teacherB &&
-        r.day === collisionLesson.day && // Same day first for easier chain
-        r.period.startsWith('P')
-      );
-
-      for (let cLesson of classXOtherLessons) {
-        const teacherC = cLesson.teacher;
-        // Check if C is free at collisionLesson.period AND B is free at cLesson.period
-        const cBusyAtBTime = currentTimetable.find(r => r.teacher === teacherC && r.day === collisionLesson.day && r.period === collisionLesson.period);
-        const bBusyAtCTime = currentTimetable.find(r => r.teacher === teacherB && r.day === cLesson.day && r.period === cLesson.period);
-
-        if (!cBusyAtBTime && !bBusyAtCTime) {
-          // Feasible chain found!
-          return {
-            teacherB: teacherB,
-            teacherC: teacherC,
-            classX: classX,
-            bOriginalSlot: collisionLesson,
-            cOriginalSlot: cLesson
-          };
-        }
-      }
-
-      return null;
-    }
-
-    function renderDirectSwapSuccess(srcUnits, destUnits) {
-      const box = document.getElementById('quick-swap-result-box');
-      box.className = 'rounded-xl p-4 text-xs border bg-emerald-50 border-emerald-200 text-emerald-950 block space-y-3';
-
-      const s = srcUnits[0];
-      const d = destUnits[0];
-      const isCrossDay = s.day !== d.day;
-
-      box.innerHTML = `
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2 font-bold text-emerald-900 text-sm">
-            <i class="ph ph-check-circle text-lg text-emerald-600"></i>
-            <span>驗證通過：可以即時直接調換！</span>
-          </div>
-          <span class="px-2 py-0.5 rounded-full font-bold text-[10px] ${isCrossDay ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}">
-            ${isCrossDay ? '同班跨天對調' : '同班同天對調'} (${srcUnits.length} 節)
-          </span>
-        </div>
-
-        <div class="bg-white/80 rounded-xl p-3 border border-emerald-200 grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <span class="text-slate-500 font-semibold block text-[11px]">【調動前】</span>
-            <p class="font-medium text-slate-800 mt-0.5">${s.teacher}：${s.day} ${s.period}${s.isDouble ? '及' + s.doublePair : ''} (${s.className} ${s.subject})</p>
-            <p class="font-medium text-slate-800">${d.teacher}：${d.day} ${d.period}${d.isDouble ? '及' + d.doublePair : ''} (${d.className} ${d.subject})</p>
-          </div>
-          <div>
-            <span class="text-emerald-700 font-bold block text-[11px]">【調動後互換】</span>
-            <p class="font-bold text-emerald-900 mt-0.5">${s.teacher} ➔ 轉至 ${d.day} ${d.period}${d.isDouble ? '及' + d.doublePair : ''}</p>
-            <p class="font-bold text-emerald-900">${d.teacher} ➔ 轉至 ${s.day} ${s.period}${s.isDouble ? '及' + s.doublePair : ''}</p>
-          </div>
-        </div>
-
-        <div class="flex items-center justify-end gap-2 pt-1">
-          <button onclick="executeSwapCommit(${JSON.stringify(srcUnits).replace(/"/g, '&quot;')}, ${JSON.stringify(destUnits).replace(/"/g, '&quot;')}, null)" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl shadow-xs transition flex items-center gap-1.5 active:scale-95">
-            <i class="ph ph-check"></i>
-            <span>確認套用調課並生成調課紙</span>
-          </button>
-        </div>
-      `;
-    }
-
-    function renderChainedSwapSuccess(srcUnits, destUnits, chain) {
-      const box = document.getElementById('quick-swap-result-box');
-      box.className = 'rounded-xl p-4 text-xs border bg-indigo-50 border-indigo-200 text-indigo-950 block space-y-3';
-
-      const s = srcUnits[0];
-      const d = destUnits[0];
-
-      box.innerHTML = `
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2 font-bold text-indigo-900 text-sm">
-            <i class="ph ph-git-branch text-lg text-indigo-600"></i>
-            <span>發現可行之「三方連鎖調課」方案 (科任先對調後讓堂)！</span>
-          </div>
-          <span class="px-2 py-0.5 rounded-full font-bold text-[10px] bg-indigo-100 text-indigo-800">
-            三方連鎖調動
-          </span>
-        </div>
-
-        <p class="text-indigo-900">
-          受調教師 <strong>${d.teacher}</strong> 在原時段 (${s.day} ${s.period}) 原本需任教 <strong>${chain.classX}</strong>。<br>
-          系統已為其排查出可行連鎖方案：<strong>${d.teacher}</strong> 可先與 <strong>${chain.classX}</strong> 的 <strong>${chain.teacherC}</strong> 互調上課次序，騰出空節後，即可順利與您完成對調！
-        </p>
-
-        <div class="bg-white/80 rounded-xl p-3 border border-indigo-200 space-y-2">
-          <div class="text-[11px] font-bold text-indigo-950 flex items-center gap-1">
-            <span class="w-4 h-4 rounded-full bg-indigo-600 text-white text-[10px] inline-flex items-center justify-center">步</span>
-            <span>兩步調動流程：</span>
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
-            <div class="p-2 bg-slate-50 rounded-lg border border-slate-200">
-              <span class="font-bold text-slate-700">步驟 1 (前置讓堂)：</span><br>
-              ${d.teacher} 與 ${chain.teacherC} 在 ${chain.classX}班 互調 (${chain.bOriginalSlot.period} ↔ ${chain.cOriginalSlot.period})
-            </div>
-            <div class="p-2 bg-indigo-50/60 rounded-lg border border-indigo-200">
-              <span class="font-bold text-indigo-800">步驟 2 (核心對調)：</span><br>
-              ${s.teacher} 與 ${d.teacher} 在 ${s.className}班 正式完成對調！
-            </div>
-          </div>
-        </div>
-
-        <div class="flex items-center justify-end gap-2 pt-1">
-          <button onclick="executeSwapCommit(${JSON.stringify(srcUnits).replace(/"/g, '&quot;')}, ${JSON.stringify(destUnits).replace(/"/g, '&quot;')}, ${JSON.stringify(chain).replace(/"/g, '&quot;')})" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-xs transition flex items-center gap-1.5 active:scale-95">
-            <i class="ph ph-check"></i>
-            <span>確認套用三方連鎖調課並產出調課紙</span>
-          </button>
-        </div>
-      `;
-    }
-
-    function renderSwapFailure(srcUnits, destUnits, aConflicts, bConflicts) {
-      const box = document.getElementById('quick-swap-result-box');
-      box.className = 'rounded-xl p-4 text-xs border bg-red-50 border-red-200 text-red-950 block space-y-3';
-
-      let reason = '';
-      if (aConflicts.length > 0) {
-        reason += `• 申請教師 <strong>${srcUnits[0].teacher}</strong> 在目標時段已有其他班級授課 (${aConflicts.map(c => `${c.day} ${c.period} [${c.className} ${c.subject}]`).join('、')})。<br>`;
-      }
-      if (bConflicts.length > 0) {
-        reason += `• 目標科任 <strong>${destUnits[0].teacher}</strong> 在原時段撞堂 (${bConflicts.map(c => `${c.day} ${c.period} [${c.className} ${c.subject}]`).join('、')})，且經排查未能促成三方讓堂。`;
-      }
-
-      box.innerHTML = `
-        <div class="flex items-center gap-2 font-bold text-red-900 text-sm">
-          <i class="ph ph-prohibit text-lg text-red-600"></i>
-          <span>調課衝突：該節暫無法直接對調</span>
-        </div>
-        <div class="text-[11px] text-red-800 leading-relaxed">
-          ${reason}
-        </div>
-        <p class="text-[11px] text-slate-600">建議方案：請嘗試選擇該班在其他時段（或跨天）的科任節數進行調動。</p>
-      `;
-    }
-
-    function executeSwapCommit(srcUnits, destUnits, chain) {
-      // Step 1: If chained, perform step 1 swap first
-      if (chain) {
-        const bSlot = currentTimetable.find(r => r.id === chain.bOriginalSlot.id);
-        const cSlot = currentTimetable.find(r => r.id === chain.cOriginalSlot.id);
-        if (bSlot && cSlot) {
-          const tempPeriod = bSlot.period;
-          bSlot.period = cSlot.period;
-          cSlot.period = tempPeriod;
-        }
-      }
-
-      // Step 2: Swap the main units
-      for (let i = 0; i < srcUnits.length; i++) {
-        const sReal = currentTimetable.find(r => r.id === srcUnits[i].id);
-        const dReal = currentTimetable.find(r => r.id === destUnits[i].id);
-
-        if (sReal && dReal) {
-          // Swap Day & Period
-          const tempDay = sReal.day;
-          const tempPeriod = sReal.period;
-
-          sReal.day = dReal.day;
-          sReal.period = dReal.period;
-
-          dReal.day = tempDay;
-          dReal.period = tempPeriod;
-        }
-      }
-
-      // Re-link double periods across timetable
-      detectAndLinkDoublePeriods(currentTimetable);
-
-      // Create Swap Record
-      const recordId = 'SWP-' + new Date().getFullYear() + '-' + String(swapHistory.length + 1).padStart(4, '0');
-      const now = new Date();
-      const recordDate = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`;
-
-      const swapRecord = {
-        id: recordId,
-        dateCreated: recordDate,
-        srcTeacher: srcUnits[0].teacher,
-        destTeacher: destUnits[0].teacher,
-        className: srcUnits[0].className,
-        srcSubject: srcUnits[0].subject,
-        destSubject: destUnits[0].subject,
-        srcOriginalSlots: srcUnits.map(u => `${u.day} ${u.period}`).join('、'),
-        destOriginalSlots: destUnits.map(u => `${u.day} ${u.period}`).join('、'),
-        isChained: !!chain,
-        chainDetails: chain,
-        isCrossDay: srcUnits[0].day !== destUnits[0].day,
-        periodCount: srcUnits.length
-      };
-
-      swapHistory.unshift(swapRecord);
-
-      // Refresh UI components
-      renderHistoryList();
-      renderTimetableGrid();
-      handleTeacherSelectChange(); // refresh slot dropdowns
-      document.getElementById('quick-swap-result-box').classList.add('hidden');
-
-      showGlobalBanner(`調課已成功套用！單號：${recordId}。調課紙已即時產生。`, 'success');
-
-      // Open the Slip Modal immediately
-      openSlipModal(swapRecord);
-    }
-
-    function resetQuickSwap(resetTeacher = true) {
-      if (resetTeacher) {
-        document.getElementById('quick-teacher-select').value = '';
-      }
-      document.getElementById('quick-src-slot').innerHTML = '<option value="">-- 請先選擇申請教師 --</option>';
-      document.getElementById('quick-dest-slot').innerHTML = '<option value="">-- 請先選擇原課堂 --</option>';
-      document.getElementById('quick-swap-result-box').classList.add('hidden');
-    }
-
-    function renderHistoryList() {
-      const container = document.getElementById('swap-history-list');
-      const badge = document.getElementById('history-count-badge');
-      badge.textContent = `${swapHistory.length} 份`;
-
-      if (swapHistory.length === 0) {
-        container.innerHTML = `
-          <div class="p-6 text-center text-slate-400 text-xs">
-            <i class="ph ph-clipboard-text text-3xl mb-1 text-slate-300 block"></i>
-            尚未有調課記錄，請使用上方工具進行調課
-          </div>
-        `;
-        return;
-      }
-
-      container.innerHTML = swapHistory.map(rec => `
-        <div class="p-3 rounded-xl border border-slate-200 hover:border-indigo-200 hover:bg-indigo-50/20 transition space-y-2 bg-white text-xs">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-indigo-700">${rec.id}</span>
-            <span class="text-[10px] text-slate-400">${rec.dateCreated}</span>
-          </div>
-          <div>
-            <span class="font-bold text-slate-800">${rec.className}班: ${rec.srcTeacher} ↔ ${rec.destTeacher}</span>
-            <div class="text-[11px] text-slate-500 mt-0.5 flex flex-wrap gap-1">
-              <span class="px-1.5 py-0.5 rounded bg-slate-100">${rec.srcOriginalSlots} (${rec.srcSubject})</span>
-              <span>↔</span>
-              <span class="px-1.5 py-0.5 rounded bg-slate-100">${rec.destOriginalSlots} (${rec.destSubject})</span>
-            </div>
-          </div>
-          <div class="flex items-center justify-between pt-1 border-t border-slate-100">
-            <span class="text-[10px] ${rec.isChained ? 'text-indigo-600 font-bold' : 'text-slate-400'}">
-              ${rec.isChained ? '★ 三方連動調換' : (rec.isCrossDay ? '跨天對調' : '當天對調')}
-            </span>
-            <button onclick="openSlipModalById('${rec.id}')" class="px-2 py-1 text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-lg flex items-center gap-1 transition">
-              <i class="ph ph-printer"></i> 檢視調課紙
-            </button>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    function openSlipModalById(id) {
-      const rec = swapHistory.find(r => r.id === id);
-      if (rec) openSlipModal(rec);
-    }
-
-    function openSlipModal(rec) {
-      const area = document.getElementById('printable-slip-area');
-      
-      area.innerHTML = `
-        <div class="space-y-6 text-slate-800">
-          <!-- Letterhead -->
-          <div class="text-center border-b-2 border-slate-800 pb-4">
-            <h2 class="text-xl font-bold tracking-wider text-slate-900">學 校 教 務 處 調 課 通 知 單</h2>
-            <div class="flex items-center justify-between text-xs text-slate-600 mt-2">
-              <span>單號：<strong>${rec.id}</strong></span>
-              <span>發出日期：${rec.dateCreated}</span>
-              <span>生效班別：<strong>${rec.className} 班</strong></span>
-            </div>
-          </div>
-
-          <!-- Summary Notice -->
-          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs leading-relaxed">
-            茲因教學活動與課堂編配需要，經雙方科任教師協商並報教務處審核，<strong>${rec.className} 班</strong> 之以下課節次序正式對調。請相關科任教師、班主任及班房學生依新時間表上課。
-          </div>
-
-          <!-- Main Swap Table -->
-          <div>
-            <h4 class="text-xs font-bold text-slate-700 uppercase mb-1.5 flex items-center gap-1">
-              <i class="ph ph-arrows-clockwise text-indigo-600"></i> 【調課內容對照表】
-            </h4>
-            <table class="w-full text-xs border-collapse border border-slate-300">
-              <thead>
-                <tr class="bg-slate-100 text-slate-700">
-                  <th class="border border-slate-300 p-2 text-left">調動方</th>
-                  <th class="border border-slate-300 p-2 text-left">科任教師</th>
-                  <th class="border border-slate-300 p-2 text-left">科目</th>
-                  <th class="border border-slate-300 p-2 text-left">原授課節數 (調出)</th>
-                  <th class="border border-slate-300 p-2 text-left bg-indigo-50/50">新授課節數 (調入)</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="border border-slate-300 p-2 font-bold text-indigo-700">申請方 (甲方)</td>
-                  <td class="border border-slate-300 p-2 font-bold">${rec.srcTeacher}</td>
-                  <td class="border border-slate-300 p-2">${rec.srcSubject}</td>
-                  <td class="border border-slate-300 p-2">${rec.srcOriginalSlots}</td>
-                  <td class="border border-slate-300 p-2 bg-indigo-50 font-bold text-indigo-900">${rec.destOriginalSlots}</td>
-                </tr>
-                <tr>
-                  <td class="border border-slate-300 p-2 font-bold text-emerald-700">受調方 (乙方)</td>
-                  <td class="border border-slate-300 p-2 font-bold">${rec.destTeacher}</td>
-                  <td class="border border-slate-300 p-2">${rec.destSubject}</td>
-                  <td class="border border-slate-300 p-2">${rec.destOriginalSlots}</td>
-                  <td class="border border-slate-300 p-2 bg-emerald-50 font-bold text-emerald-900">${rec.srcOriginalSlots}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          ${rec.isChained && rec.chainDetails ? `
-          <!-- Chained swap appendix -->
-          <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs space-y-1">
-            <span class="font-bold text-amber-900 flex items-center gap-1">
-              <i class="ph ph-link"></i> 前置連鎖讓堂紀錄 (附聯)：
-            </span>
-            <p class="text-amber-800 text-[11px]">
-              為配合是次調課，<strong>${rec.destTeacher}</strong> 先行與 <strong>${rec.chainDetails.classX} 班</strong> 科任 <strong>${rec.chainDetails.teacherC}</strong> 進行內部次序互調，以騰出該節空堂完成本單對調。
-            </p>
-          </div>
-          ` : ''}
-
-          <!-- Notice to Class/Students -->
-          <div class="border border-dashed border-slate-300 rounded-xl p-3 text-xs bg-slate-50/40">
-            <span class="font-bold text-slate-800">【班房學生及班主任須知】</span>
-            <p class="text-slate-600 mt-0.5">請班長於黑板右側「每日課堂異動」欄填寫：${rec.srcOriginalSlots} 與 ${rec.destOriginalSlots} 之【${rec.srcSubject}】及【${rec.destSubject}】對調，請攜帶相應課本及課堂用品。</p>
-          </div>
-
-          <!-- Signatures Section -->
-          <div class="pt-6 border-t border-slate-200 grid grid-cols-3 gap-6 text-center text-xs">
-            <div class="space-y-8">
-              <p class="text-slate-500">申請教師 (甲方) 簽署：</p>
-              <div class="border-b border-slate-400 mx-4"></div>
-              <p class="font-semibold text-slate-700">${rec.srcTeacher}</p>
-            </div>
-            <div class="space-y-8">
-              <p class="text-slate-500">受調教師 (乙方) 簽署：</p>
-              <div class="border-b border-slate-400 mx-4"></div>
-              <p class="font-semibold text-slate-700">${rec.destTeacher}</p>
-            </div>
-            <div class="space-y-8">
-              <p class="text-slate-500">教務主任 / 校方批核：</p>
-              <div class="border-b border-slate-400 mx-4"></div>
-              <p class="font-semibold text-slate-700">教務處蓋印</p>
-            </div>
-          </div>
-        </div>
-      `;
-
-      document.getElementById('slip-modal').classList.remove('hidden');
-      document.getElementById('slip-modal').classList.add('flex');
-    }
-
-    function closeSlipModal() {
-      document.getElementById('slip-modal').classList.remove('flex');
-      document.getElementById('slip-modal').classList.add('hidden');
-    }
-
-    function copySlipTextToClipboard() {
-      const area = document.getElementById('printable-slip-area');
-      const text = area.innerText;
-      
-      const el = document.createElement('textarea');
-      el.value = text;
-      document.body.appendChild(el);
-      el.select();
-      document.execCommand('copy');
-      document.body.removeChild(el);
-
-      showGlobalBanner('調課單通報文字已複製至剪貼簿！', 'success');
-    }
-
-    function clearHistory() {
-      if (swapHistory.length === 0) return;
-      swapHistory = [];
-      renderHistoryList();
-      showGlobalBanner('已清空調課歷史記錄', 'info');
-    }
-
-    function populateTimetableViewFilters() {
-      const mode = document.getElementById('view-mode-filter').value;
-      const targetSel = document.getElementById('view-target-select');
-      const targetLabel = document.getElementById('view-target-label');
-
-      targetSel.innerHTML = '';
-
-      if (mode === 'class') {
-        targetLabel.textContent = '選擇班別:';
-        classList.forEach(c => {
-          const opt = document.createElement('option');
-          opt.value = c;
-          opt.textContent = c + ' 班';
-          targetSel.appendChild(opt);
         });
-        if (classList.includes('4B')) targetSel.value = '4B';
-      } else {
-        targetLabel.textContent = '選擇教師:';
-        teacherList.forEach(t => {
-          const opt = document.createElement('option');
-          opt.value = t;
-          opt.textContent = t;
-          targetSel.appendChild(opt);
-        });
-      }
+      });
     }
-
-    document.getElementById('view-mode-filter').addEventListener('change', () => {
-      populateTimetableViewFilters();
-      renderTimetableGrid();
-    });
 
     function renderTimetableGrid() {
       const mode = document.getElementById('view-mode-filter').value;
@@ -1452,38 +658,55 @@
         return;
       }
 
-      const periods = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8'];
-
       let html = `
         <thead>
           <tr class="bg-slate-50 border-b border-slate-200 text-slate-600">
-            <th class="p-2.5 font-bold border-r border-slate-200 w-24 text-center">節數</th>
+            <th class="p-2.5 font-bold border-r border-slate-200 w-44 text-center">全日 18 節編配</th>
             ${DAYS_ORDER.map(d => `<th class="p-2.5 font-bold text-center border-r border-slate-200">${d}</th>`).join('')}
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-200">
       `;
 
-      periods.forEach(pKey => {
-        html += `<tr>`;
-        html += `<td class="p-2 font-bold text-center bg-slate-50/60 border-r border-slate-200 text-slate-700">${pKey}</td>`;
+      DAILY_18_SLOTS.forEach((slotInfo, sIdx) => {
+        const isDutyRow = slotInfo.type === 'duty';
+        const rowBg = isDutyRow ? 'bg-amber-50/40' : (sIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/20');
+
+        html += `<tr class="${rowBg}">`;
+        html += `
+          <td class="p-2 text-center border-r border-slate-200 text-slate-700">
+            <div class="font-bold text-[11px]">${slotInfo.label}</div>
+            <div class="text-[10px] text-slate-400 font-mono">${slotInfo.time}</div>
+          </td>
+        `;
 
         DAYS_ORDER.forEach(day => {
-          let lesson = null;
+          let slotItem = null;
           if (mode === 'class') {
-            lesson = currentTimetable.find(r => r.day === day && r.period === pKey && r.className === targetVal);
+            slotItem = currentTimetable.find(r => r.day === day && r.period === slotInfo.key && (r.className === targetVal || (isDutyRow && r.className === '全校')));
           } else {
-            lesson = currentTimetable.find(r => r.day === day && r.period === pKey && r.teacher === targetVal);
+            slotItem = currentTimetable.find(r => r.day === day && r.period === slotInfo.key && r.teacher === targetVal);
           }
 
-          if (lesson) {
-            const doubleBadge = lesson.isDouble ? '<span class="inline-block px-1 py-0.2 text-[9px] rounded bg-indigo-100 text-indigo-800 font-bold ml-1">連堂</span>' : '';
-            html += `
-              <td class="p-2 border-r border-slate-200 text-center hover:bg-slate-50 transition">
-                <div class="font-bold text-slate-800">${mode === 'class' ? lesson.subject : lesson.className + ' ' + lesson.subject} ${doubleBadge}</div>
-                <div class="text-[10px] text-slate-500">${mode === 'class' ? lesson.teacher : lesson.subject}</div>
-              </td>
-            `;
+          if (slotItem) {
+            if (slotItem.isDuty) {
+              html += `
+                <td class="p-1.5 border-r border-slate-200 text-center">
+                  <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+                    <i class="ph ph-shield-check"></i> ${slotItem.subject}
+                  </div>
+                  <div class="text-[9px] text-slate-400 mt-0.5">${slotItem.teacher}</div>
+                </td>
+              `;
+            } else {
+              const doubleBadge = slotItem.isDouble ? '<span class="inline-block px-1 py-0.2 text-[9px] rounded bg-indigo-100 text-indigo-800 font-bold ml-1">雙教節</span>' : '';
+              html += `
+                <td class="p-2 border-r border-slate-200 text-center hover:bg-slate-100/60 transition">
+                  <div class="font-bold text-slate-800">${mode === 'class' ? slotItem.subject : slotItem.className + ' ' + slotItem.subject} ${doubleBadge}</div>
+                  <div class="text-[10px] text-slate-500">${mode === 'class' ? slotItem.teacher : slotItem.subject}</div>
+                </td>
+              `;
+            }
           } else {
             html += `<td class="p-2 border-r border-slate-200 text-center text-slate-300 text-[11px]">-</td>`;
           }
