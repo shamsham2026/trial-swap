@@ -998,14 +998,17 @@
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2 font-bold text-emerald-800 text-sm">
               <i class="ph ph-check-circle text-lg"></i>
-              <span>調動診斷：完全合規無衝突</span>
+              <span>調動診斷：雙方直接對調完全合規無衝突</span>
             </div>
-            <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold border border-emerald-300">場地及雙師全過關</span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold border border-emerald-300">
+              ${groupATeachers.length > 1 || groupBTeachers.length > 1 ? '雙師合教同步連動' : '單節科任直接對調'}
+            </span>
           </div>
           <div class="bg-white/80 p-2.5 rounded-lg border border-emerald-200 text-[11px] space-y-1">
-            <p><strong>調動詳情：</strong> [${srcLesson.className}班] ${groupATeachers.join('+')} (${srcLesson.subject}${srcLesson.isDouble ? '・雙教節' : ''}) ⇄ ${groupBTeachers.join('+')} (${destLesson.subject}${destLesson.isDouble ? '・雙教節' : ''})</p>
+            <p><strong>調動詳情：</strong> [${srcLesson.className}班] ${groupATeachers.join(' & ')} (${srcLesson.subject}) ⇄ ${groupBTeachers.join(' & ')} (${destLesson.subject})</p>
             <p><strong>原課節時段：</strong> ${srcDate} (${srcLesson.day}) ${getSlotCleanTitle(srcLesson.period)}</p>
             <p><strong>目標課節時段：</strong> ${destDate} (${destLesson.day}) ${getSlotCleanTitle(destLesson.period)}</p>
+            ${srcLesson.isDouble || destLesson.isDouble ? '<p class="text-amber-700 font-semibold text-[10px]">※ 提示：此調動為單節調整，請留意連堂後續課堂之銜接。</p>' : ''}
           </div>
           <div class="pt-1 flex justify-end">
             <button onclick="executeSwapBetweenLessons('${srcLesson.id}', '${destLesson.id}')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-xl shadow-md transition flex items-center gap-1.5">
@@ -1018,257 +1021,192 @@
         return;
       }
 
-      // Clashes detected: Display clear diagnosis and suggest Ideal Cycle Swap
-      resultBox.className = 'rounded-xl p-4 text-xs border bg-rose-50 border-rose-200 text-rose-900 space-y-2.5';
-      resultBox.innerHTML = `
-        <div class="flex items-center gap-2 font-bold text-rose-800 text-sm">
-          <i class="ph ph-warning-circle text-lg"></i>
-          <span>調動被攔截：偵測到課堂或值日衝突</span>
-        </div>
-        <div class="bg-white/80 p-3 rounded-lg border border-rose-200 text-[11px] space-y-1.5 leading-relaxed">
-          ${clashA.map(msg => `<p class="text-rose-700 flex items-center gap-1"><i class="ph ph-x text-rose-500"></i> ${msg}</p>`).join('')}
-          ${clashB.map(msg => `<p class="text-rose-700 flex items-center gap-1"><i class="ph ph-x text-rose-500"></i> ${msg}</p>`).join('')}
-          <div class="pt-2 border-t border-rose-100 text-slate-600">
-            <strong>💡 建議解方：</strong> 請點選上方 <strong>「2. 理想調動 (智能搜尋)」</strong>，由系統為您自動搜尋<strong>三方或四方環狀互調</strong>方案，或切換為<strong>「找人代課模式」</strong>。
+      /* Clashes detected: IMMEDIATELY TRIGGER AUTOMATED 3-WAY & 4-WAY CYCLE RESOLUTION */
+      const cycleSolutions = findCycleResolutionsForClash(srcLesson, destLesson);
+
+      resultBox.className = 'rounded-xl p-4 text-xs border bg-amber-50/90 border-amber-300 text-amber-950 space-y-3';
+      
+      let cycleSolutionsHtml = '';
+      if (cycleSolutions.length > 0) {
+        cycleSolutionsHtml = `
+          <div class="pt-2 border-t border-amber-200 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-1.5 font-black text-indigo-900 text-xs sm:text-sm">
+                <i class="ph ph-arrows-clockwise text-indigo-600 text-base animate-spin" style="animation-duration: 4s;"></i>
+                <span>已自動啟動環狀互調！為您找到 ${cycleSolutions.length} 個替代方案：</span>
+              </div>
+              <span class="text-[10px] px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 font-bold border border-indigo-200">
+                自動消解撞堂
+              </span>
+            </div>
+
+            <div class="space-y-2 max-h-60 overflow-y-auto pr-1">
+              ${cycleSolutions.map((sol, idx) => `
+                <div class="p-3 bg-white rounded-xl border border-indigo-200 shadow-2xs hover:border-indigo-400 transition space-y-2">
+                  <div class="flex items-center justify-between">
+                    <span class="font-extrabold text-indigo-900 flex items-center gap-1">
+                      <span class="w-4 h-4 rounded-full bg-indigo-600 text-white text-[10px] flex items-center justify-center">${idx + 1}</span>
+                      <span>${sol.typeName}</span>
+                    </span>
+                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      完全無撞堂・體育電腦合規
+                    </span>
+                  </div>
+                  <p class="text-[11px] text-slate-700 font-semibold leading-relaxed">${sol.description}</p>
+                  <div class="bg-slate-50 p-2 rounded-lg text-[10px] text-slate-600 space-y-1 border border-slate-100 font-mono">
+                    ${sol.chain.map((m, i) => {
+                      const nextL = sol.chain[(i + 1) % sol.chain.length];
+                      return `<div>步驟 ${i + 1}: <strong>${m.teachers.join(' & ')}</strong> (${m.subject}) ➔ 移至 ${nextL.day} ${getSlotCleanTitle(nextL.period)}</div>`;
+                    }).join('')}
+                  </div>
+                  <div class="pt-1 flex justify-end">
+                    <button onclick="executeResolvedCycle(${idx})" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold rounded-lg text-xs shadow-xs transition flex items-center gap-1.5">
+                      <i class="ph ph-magic-wand"></i>
+                      <span>一鍵套用此${sol.typeName.includes('三方') ? '三方' : '四方'}方案</span>
+                    </button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
           </div>
+        `;
+      } else {
+        cycleSolutionsHtml = `
+          <div class="pt-2 border-t border-amber-200 text-[11px] text-slate-600 space-y-1">
+            <p><strong>💡 智能建議：</strong></p>
+            <p>在同班範圍內暫未能組成無撞堂之 3-way/4-way 迴圈。建議點選上方 <strong>「找人代課」</strong> 模式，直接委派該節空堂同事看管，免動全班節數次序。</p>
+          </div>
+        `;
+      }
+
+      resultBox.innerHTML = `
+        <div class="flex items-center gap-2 font-bold text-amber-900 text-sm">
+          <i class="ph ph-warning-octagon text-lg text-amber-600"></i>
+          <span>雙方直接對調受阻：偵測到科任授課衝撞</span>
         </div>
+        <div class="bg-white/90 p-2.5 rounded-xl border border-amber-200 text-[11px] space-y-1">
+          ${clashA.map(msg => `<p class="text-rose-700 flex items-center gap-1"><i class="ph ph-x-circle text-rose-500"></i> ${msg}</p>`).join('')}
+          ${clashB.map(msg => `<p class="text-rose-700 flex items-center gap-1"><i class="ph ph-x-circle text-rose-500"></i> ${msg}</p>`).join('')}
+        </div>
+        ${cycleSolutionsHtml}
       `;
       resultBox.classList.remove('hidden');
     }
 
-    /* Execute Swap with complete double-period pair sync */
-    function executeSwapBetweenLessons(idA, idB) {
-      const lessonA = currentTimetable.find(r => r.id === idA);
-      const lessonB = currentTimetable.find(r => r.id === idB);
-      if (!lessonA || !lessonB) return;
+    /* Cache for automatically resolved cycles triggered on clash */
+    let activeClashCycles = [];
 
-      const recordId = 'SWP_' + Date.now();
-      const origDayA = lessonA.day, origPeriodA = lessonA.period;
-      const origDayB = lessonB.day, origPeriodB = lessonB.period;
-
-      // Swap Primary Lessons
-      lessonA.day = origDayB; lessonA.period = origPeriodB; lessonA.isSwapped = true; lessonA.swapSlipId = recordId;
-      lessonB.day = origDayA; lessonB.period = origPeriodA; lessonB.isSwapped = true; lessonB.swapSlipId = recordId;
-
-      // If Double Lesson, swap the pair as well
-      let pairRecordNote = '';
-      if (lessonA.isDouble && lessonA.doublePair && lessonB.isDouble && lessonB.doublePair) {
-        const pairA = currentTimetable.find(r => r.id === lessonA.doublePair);
-        const pairB = currentTimetable.find(r => r.id === lessonB.doublePair);
-        if (pairA && pairB) {
-          const pDayA = pairA.day, pPeriodA = pairA.period;
-          const pDayB = pairB.day, pPeriodB = pairB.period;
-          pairA.day = pDayB; pairA.period = pPeriodB; pairA.isSwapped = true; pairA.swapSlipId = recordId;
-          pairB.day = pDayA; pairB.period = pPeriodA; pairB.isSwapped = true; pairB.swapSlipId = recordId;
-          pairRecordNote = '（本案包含雙教節成對同步連動）';
-        }
-      }
-
-      const teacherAName = lessonA.teachers ? lessonA.teachers.join(' + ') : lessonA.teacher;
-      const teacherBName = lessonB.teachers ? lessonB.teachers.join(' + ') : lessonB.teacher;
-
-      const record = {
-        id: recordId,
-        date: new Date().toLocaleDateString('zh-HK'),
-        type: '同班科任對調',
-        className: lessonA.className,
-        teacherA: teacherAName,
-        subjectA: lessonA.subject,
-        origSlot: `${origDayA} ${getSlotCleanTitle(origPeriodA)}`,
-        teacherB: teacherBName,
-        subjectB: lessonB.subject,
-        targetSlot: `${origDayB} ${getSlotCleanTitle(origPeriodB)}`,
-        note: `經教務處審核通過，雙方教師無撞堂，且符合體育（每節最多2班）及電腦（每節最多1班）之場地限制。${pairRecordNote}`,
-        lessonIds: [lessonA.id, lessonB.id, lessonA.doublePair, lessonB.doublePair].filter(Boolean),
-        origSlots: [
-          { id: lessonA.id, day: origDayA, period: origPeriodA },
-          { id: lessonB.id, day: origDayB, period: origPeriodB }
-        ]
-      };
-
-      swapHistory.unshift(record);
-      finishSwapAction(record);
+    /* Multi-teacher helper: checks if ALL co-teachers can teach at target day & slot */
+    function canAllCoTeachersTeach(lesson, targetDay, targetPeriod, movingOutLessonIds = []) {
+      const teachers = lesson.teachers && lesson.teachers.length > 0 ? lesson.teachers : [lesson.teacher];
+      return teachers.every(t => {
+        return !currentTimetable.some(r => 
+          r.day === targetDay && 
+          r.period === targetPeriod && 
+          r.teachers && 
+          r.teachers.includes(t) && 
+          !movingOutLessonIds.includes(r.id)
+        );
+      });
     }
 
-    function computeIdealCycleRecommendations() {
-      const srcId = document.getElementById('quick-src-slot').value;
-      const list = document.getElementById('ideal-recommendations-list');
-      list.innerHTML = '';
-
-      if (!srcId) {
-        list.innerHTML = '<div class="p-4 text-center text-slate-400 text-xs bg-white rounded-xl border border-slate-200">請在左側選定需調出之課堂</div>';
-        return;
-      }
-
-      const srcLesson = currentTimetable.find(r => r.id === srcId);
-      if (!srcLesson) return;
-
+    /* Immediate 3-Way & 4-Way solver when direct swap is blocked */
+    function findCycleResolutionsForClash(srcLesson, destLesson) {
       const candidates = [];
       const sameClassLessons = currentTimetable.filter(r => 
         r.className === srcLesson.className && 
         r.id !== srcLesson.id && 
-        r.id !== srcLesson.doublePair &&
         !r.isDuty
       );
 
-      // Helper function to check if teacher can teach at a specific slot
-      const canTeacherTeach = (teachers, day, period, ignoreLessonIds = []) => {
-        return teachers.every(t => {
-          return !currentTimetable.some(r => 
-            r.day === day && 
-            r.period === period && 
-            r.teachers && 
-            r.teachers.includes(t) && 
-            !ignoreLessonIds.includes(r.id)
-          );
-        });
-      };
+      // Strategy 1: 3-Way Cycle involving srcLesson, destLesson and a third lesson C
+      // Path: src -> dest slot, dest -> C slot, C -> src slot
+      sameClassLessons.forEach(c => {
+        if (c.id === destLesson.id) return;
 
-      // 1. Direct 2-Way Swaps
-      sameClassLessons.forEach(b => {
-        if (srcLesson.isDouble && !b.isDouble) return;
-        const peA = checkVenueCapacityConflict(b.day, b.period, srcLesson.subject, [b.id]);
-        const peB = checkVenueCapacityConflict(srcLesson.day, srcLesson.period, b.subject, [srcLesson.id]);
-        if (peA.conflict || peB.conflict) return;
+        // Check venue capacities
+        if (checkVenueCapacityConflict(destLesson.day, destLesson.period, srcLesson.subject, [destLesson.id]).conflict) return;
+        if (checkVenueCapacityConflict(c.day, c.period, destLesson.subject, [c.id]).conflict) return;
+        if (checkVenueCapacityConflict(srcLesson.day, srcLesson.period, c.subject, [srcLesson.id]).conflict) return;
 
-        if (canTeacherTeach(srcLesson.teachers, b.day, b.period, [b.id]) &&
-            canTeacherTeach(b.teachers, srcLesson.day, srcLesson.period, [srcLesson.id])) {
+        // Check all co-teachers for each step
+        const step1 = canAllCoTeachersTeach(srcLesson, destLesson.day, destLesson.period, [destLesson.id]);
+        const step2 = canAllCoTeachersTeach(destLesson, c.day, c.period, [c.id]);
+        const step3 = canAllCoTeachersTeach(c, srcLesson.day, srcLesson.period, [srcLesson.id]);
+
+        if (step1 && step2 && step3) {
           candidates.push({
-            type: '2way',
-            typeName: '雙方直接對調 (2-Way)',
-            score: (srcLesson.day === b.day ? 100 : 80),
-            chain: [srcLesson, b],
-            description: `【${srcLesson.day === b.day ? '同天調換' : '跨天對調'}】與 ${b.teachers.join('+')} (${b.subject}) 互換時段`
+            type: '3way',
+            typeName: '三方環狀互調 (3-Way Cycle)',
+            chain: [srcLesson, destLesson, c],
+            description: `三方依序移位：${srcLesson.teachers.join('&')} 接替 ${destLesson.teachers.join('&')} ➔ ${destLesson.teachers.join('&')} 移至 ${c.teachers.join('&')} (${c.subject}) ➔ ${c.teachers.join('&')} 補入原位`
           });
         }
       });
 
-      // 2. 3-Way Cycle Swaps: A -> B, B -> C, C -> A
-      sameClassLessons.forEach(b => {
-        if (srcLesson.isDouble && !b.isDouble) return;
-        sameClassLessons.forEach(c => {
-          if (c.id === b.id) return;
-          if (srcLesson.isDouble && !c.isDouble) return;
+      // Strategy 2: Alternative 3-Way: src -> C slot, C -> dest slot, dest -> src slot
+      sameClassLessons.forEach(c => {
+        if (c.id === destLesson.id) return;
 
-          // Check venue constraints
-          if (checkVenueCapacityConflict(b.day, b.period, srcLesson.subject, [b.id]).conflict) return;
-          if (checkVenueCapacityConflict(c.day, c.period, b.subject, [c.id]).conflict) return;
-          if (checkVenueCapacityConflict(srcLesson.day, srcLesson.period, c.subject, [srcLesson.id]).conflict) return;
+        if (checkVenueCapacityConflict(c.day, c.period, srcLesson.subject, [c.id]).conflict) return;
+        if (checkVenueCapacityConflict(destLesson.day, destLesson.period, c.subject, [destLesson.id]).conflict) return;
+        if (checkVenueCapacityConflict(srcLesson.day, srcLesson.period, destLesson.subject, [srcLesson.id]).conflict) return;
 
-          // A moves to B's slot, B moves to C's slot, C moves to A's slot
-          if (canTeacherTeach(srcLesson.teachers, b.day, b.period, [b.id]) &&
-              canTeacherTeach(b.teachers, c.day, c.period, [c.id]) &&
-              canTeacherTeach(c.teachers, srcLesson.day, srcLesson.period, [srcLesson.id])) {
+        const step1 = canAllCoTeachersTeach(srcLesson, c.day, c.period, [c.id]);
+        const step2 = canAllCoTeachersTeach(c, destLesson.day, destLesson.period, [destLesson.id]);
+        const step3 = canAllCoTeachersTeach(destLesson, srcLesson.day, srcLesson.period, [srcLesson.id]);
+
+        if (step1 && step2 && step3) {
+          const isDuplicate = candidates.some(ex => ex.chain.some(item => item.id === c.id));
+          if (!isDuplicate) {
             candidates.push({
               type: '3way',
               typeName: '三方環狀互調 (3-Way Cycle)',
-              score: 75,
-              chain: [srcLesson, b, c],
-              description: `三方輪換：${srcLesson.teachers.join('+')} ➔ ${b.teachers.join('+')} (${b.subject}) ➔ ${c.teachers.join('+')} (${c.subject}) ➔ 回調`
+              chain: [srcLesson, c, destLesson],
+              description: `三方間接調轉：${srcLesson.teachers.join('&')} 轉至 ${c.teachers.join('&')} (${c.subject}) ➔ ${c.teachers.join('&')} 入目標時段 ➔ ${destLesson.teachers.join('&')} 補回原位`
             });
           }
-        });
+        }
       });
 
-      // 3. 4-Way Cycle Swaps: A -> B -> C -> D -> A (Limit search for performance)
-      if (candidates.length < 5) {
+      // Strategy 3: 4-Way Cycle: src -> dest, dest -> C, C -> D, D -> src
+      if (candidates.length < 3) {
         for (let i = 0; i < Math.min(sameClassLessons.length, 6); i++) {
-          const b = sameClassLessons[i];
+          const c = sameClassLessons[i];
+          if (c.id === destLesson.id) continue;
           for (let j = 0; j < Math.min(sameClassLessons.length, 6); j++) {
-            const c = sameClassLessons[j];
-            if (c.id === b.id) continue;
-            for (let k = 0; k < Math.min(sameClassLessons.length, 6); k++) {
-              const d = sameClassLessons[k];
-              if (d.id === b.id || d.id === c.id) continue;
+            const d = sameClassLessons[j];
+            if (d.id === destLesson.id || d.id === c.id) continue;
 
-              if (canTeacherTeach(srcLesson.teachers, b.day, b.period, [b.id]) &&
-                  canTeacherTeach(b.teachers, c.day, c.period, [c.id]) &&
-                  canTeacherTeach(c.teachers, d.day, d.period, [d.id]) &&
-                  canTeacherTeach(d.teachers, srcLesson.day, srcLesson.period, [srcLesson.id])) {
-                candidates.push({
-                  type: '4way',
-                  typeName: '四方環狀互調 (4-Way Cycle)',
-                  score: 60,
-                  chain: [srcLesson, b, c, d],
-                  description: `四方輪替重組：4位科任依序順延時段化解全校撞堂`
-                });
-                if (candidates.length >= 10) break;
-              }
+            if (checkVenueCapacityConflict(destLesson.day, destLesson.period, srcLesson.subject, [destLesson.id]).conflict) continue;
+            if (checkVenueCapacityConflict(c.day, c.period, destLesson.subject, [c.id]).conflict) continue;
+            if (checkVenueCapacityConflict(d.day, d.period, c.subject, [d.id]).conflict) continue;
+            if (checkVenueCapacityConflict(srcLesson.day, srcLesson.period, d.subject, [srcLesson.id]).conflict) continue;
+
+            if (canAllCoTeachersTeach(srcLesson, destLesson.day, destLesson.period, [destLesson.id]) &&
+                canAllCoTeachersTeach(destLesson, c.day, c.period, [c.id]) &&
+                canAllCoTeachersTeach(c, d.day, d.period, [d.id]) &&
+                canAllCoTeachersTeach(d, srcLesson.day, srcLesson.period, [srcLesson.id])) {
+              candidates.push({
+                type: '4way',
+                typeName: '四方環狀互調 (4-Way Cycle)',
+                chain: [srcLesson, destLesson, c, d],
+                description: `四方連鎖輪替：${srcLesson.teachers.join('&')} ➔ ${destLesson.teachers.join('&')} ➔ ${c.teachers.join('&')} ➔ ${d.teachers.join('&')} 順延補位消解全校撞堂`
+              });
+              if (candidates.length >= 4) break;
             }
           }
+          if (candidates.length >= 4) break;
         }
       }
 
-      cachedIdealCandidates = candidates;
-      renderIdealCandidatesList();
+      activeClashCycles = candidates;
+      return candidates;
     }
 
-    function setIdealFilter(filter) {
-      currentIdealFilter = filter;
-      ['all', '2way', '3way', '4way'].forEach(f => {
-        const btn = document.getElementById(`ideal-filter-${f}`);
-        if (!btn) return;
-        if (f === filter) {
-          btn.className = 'px-2.5 py-1 rounded-lg font-bold bg-indigo-600 text-white shadow-2xs';
-        } else {
-          btn.className = 'px-2.5 py-1 rounded-lg font-semibold bg-white border border-slate-200 text-slate-600 hover:text-slate-900';
-        }
-      });
-      renderIdealCandidatesList();
-    }
-
-    function renderIdealCandidatesList() {
-      const list = document.getElementById('ideal-recommendations-list');
-      list.innerHTML = '';
-
-      let filtered = cachedIdealCandidates;
-      if (currentIdealFilter !== 'all') {
-        filtered = cachedIdealCandidates.filter(c => c.type === currentIdealFilter);
-      }
-
-      if (filtered.length === 0) {
-        list.innerHTML = `
-          <div class="p-4 text-center text-slate-400 text-xs bg-white rounded-xl border border-slate-200">
-            在此篩選條件下暫無完全無撞堂之候選方案，建議切換為「找人代課」或選取其他篩選。
-          </div>
-        `;
-        return;
-      }
-
-      filtered.forEach((cand, idx) => {
-        const card = document.createElement('div');
-        card.className = 'p-3 rounded-xl border border-slate-200 bg-white hover:border-indigo-300 hover:shadow-xs transition space-y-2 text-xs';
-        
-        const badgeColor = cand.type === '2way' ? 'bg-emerald-100 text-emerald-800' : (cand.type === '3way' ? 'bg-indigo-100 text-indigo-800' : 'bg-purple-100 text-purple-800');
-
-        card.innerHTML = `
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-1.5 font-bold">
-              <span class="w-5 h-5 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center text-[10px]">${idx + 1}</span>
-              <span class="px-2 py-0.5 rounded text-[10px] font-extrabold ${badgeColor}">${cand.typeName}</span>
-            </div>
-            <span class="text-[10px] font-bold text-amber-600 flex items-center gap-0.5">
-              <i class="ph ph-star-fill text-amber-400"></i> 推薦指數 ${cand.score}分
-            </span>
-          </div>
-          <p class="text-[11px] text-slate-700 font-semibold leading-relaxed">${cand.description}</p>
-          <div class="bg-slate-50 p-2 rounded-lg border border-slate-100 text-[10px] text-slate-500 space-y-0.5">
-            ${cand.chain.map((m, i) => `<div>步驟 ${i + 1}: ${m.teachers.join('+')} (${m.subject}) ➔ 移至 ${cand.chain[(i + 1) % cand.chain.length].day} ${getSlotCleanTitle(cand.chain[(i + 1) % cand.chain.length].period)}</div>`).join('')}
-          </div>
-          <div class="pt-1 flex justify-end">
-            <button onclick="executeMultiWayCycle(${idx})" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold rounded-lg text-xs shadow-xs transition flex items-center gap-1">
-              <i class="ph ph-check"></i>
-              <span>一鍵套用此推薦方案</span>
-            </button>
-          </div>
-        `;
-        list.appendChild(card);
-      });
-    }
-
-    /* Execute Multi-way Cycle Swap */
-    function executeMultiWayCycle(candIndex) {
-      const cand = cachedIdealCandidates[candIndex];
+    /* Execute automated cycle directly from diagnostic clash result */
+    function executeResolvedCycle(solIndex) {
+      const cand = activeClashCycles[solIndex];
       if (!cand || !cand.chain || cand.chain.length < 2) return;
 
       const recordId = 'CYC_' + Date.now();
@@ -1276,6 +1214,7 @@
       const origSlots = cand.chain.map(l => ({ id: l.id, day: l.day, period: l.period }));
 
       // Cycle swap: chain[i] moves to chain[(i+1)%n]'s slot
+      // All co-teachers for each lesson are atomically moved together
       for (let i = 0; i < n; i++) {
         const currentL = cand.chain[i];
         const nextSlot = origSlots[(i + 1) % n];
@@ -1292,14 +1231,14 @@
         className: cand.chain[0].className,
         isCycleSwap: true,
         movements: cand.chain.map((l, i) => ({
-          teacher: l.teachers.join(' + '),
+          teacher: l.teachers && l.teachers.length > 0 ? l.teachers.join(' & ') : l.teacher,
           subject: l.subject,
           fromDay: origSlots[i].day,
           fromPeriod: origSlots[i].period,
           toDay: origSlots[(i + 1) % n].day,
           toPeriod: origSlots[(i + 1) % n].period
         })),
-        note: `經教務處核准，採用${cand.typeName}，解決教師撞堂並符合體育≤2班、電腦≤1班之限制。`,
+        note: `系統即時啟動【${cand.typeName}】機制，成功排除科任撞堂問題，二人同課（雙師）已整組同步調移，並符合體育≤2班、電腦≤1班之校本場地限制。`,
         lessonIds: cand.chain.map(l => l.id),
         origSlots: origSlots
       };
