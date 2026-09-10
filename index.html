@@ -53,7 +53,7 @@
             <span>智能課堂調動與代課紙系統</span>
             <span class="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200">18節校本架構</span>
           </h1>
-          <p class="text-xs text-slate-500">同班科任對調・雙教節連動・導修班主任代課・不定期課堂指定日期鎖定</p>
+          <p class="text-xs text-slate-500">同班科任對調・雙教節連動・雙師合教同步・導修代課・指定日期鎖定</p>
         </div>
       </div>
 
@@ -77,7 +77,7 @@
     <!-- Global Notification Banner -->
     <div id="global-msg-banner" class="hidden p-3.5 rounded-xl text-xs font-semibold border transition-all duration-300"></div>
 
-    <!-- Targeted Swap & Cover Console with Prominent Date Pickers -->
+    <!-- Targeted Swap & Cover Console -->
     <section class="bg-white border border-slate-200/80 rounded-2xl p-5 sm:p-6 shadow-sm space-y-5">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
         <div class="flex items-center gap-3">
@@ -86,7 +86,7 @@
           </span>
           <div>
             <h2 class="text-sm sm:text-base font-bold text-slate-900">課堂調動與代課指派控制台</h2>
-            <p class="text-xs text-slate-500">日期導向設計・支援同日／跨日同班科任對調・雙教節整組調動・空堂代課指派</p>
+            <p class="text-xs text-slate-500">日期導向設計・支援同日／跨日同班科任對調・雙師雙教節整組調動・空堂代課指派</p>
           </div>
         </div>
 
@@ -151,6 +151,34 @@
                   <i class="ph ph-caret-down text-xs"></i>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <!-- Source Slot Selection -->
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="text-xs font-bold text-slate-700 flex items-center gap-1">
+                <i class="ph ph-clock text-indigo-600"></i>
+                <span>選擇需調出／代課之課節：</span>
+              </label>
+              <span id="cover-eligible-badge" class="hidden text-[10px] font-bold px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full border border-amber-300">
+                可指派代課
+              </span>
+            </div>
+            <div class="relative">
+              <select id="quick-src-slot" onchange="handleSrcSlotChange()" class="w-full px-3 py-2 text-xs font-semibold border border-slate-300 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition shadow-2xs appearance-none">
+                <option value="">-- 請先選擇調出日期與教師 --</option>
+              </select>
+              <div class="absolute inset-y-0 right-0 flex items-center px-2.5 pointer-events-none text-slate-400">
+                <i class="ph ph-caret-down text-xs"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dynamic Source Slot Info Box -->
+          <div id="src-slot-info-box" class="hidden rounded-xl text-xs transition-all"></div>
+        </div>
+
         <!-- Right Box: Destination (目標對調 或 理想推薦 或 代課指派) -->
         <div class="lg:col-span-6 bg-slate-50/70 border border-slate-200/80 rounded-xl p-4 space-y-3.5">
           <div class="flex items-center justify-between border-b border-slate-200/60 pb-2">
@@ -503,7 +531,6 @@
     </div>
   </div>
 
-  <!-- Main System JavaScript Logic -->
   <script>
     /* Global Application State */
     let currentTimetable = [];
@@ -513,7 +540,6 @@
     let swapHistory = [];
     let lockedSlots = []; // Special irregular / fixed lessons with date & weekday
     let activeImportTab = 'file';
-    let pendingImportData = null;
     let lastGeneratedSlipText = '';
     let currentConsoleMode = 'target'; // 'target', 'ideal', or 'cover'
     let currentViewMode = 'class'; // 'class' or 'teacher'
@@ -525,7 +551,7 @@
       if (!dateStr) return '星期一';
       const parts = dateStr.split('-');
       if (parts.length === 3) {
-        const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
         const dayIdx = d.getDay();
         const map = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
         return map[dayIdx] || '星期一';
@@ -583,10 +609,22 @@
       return currentTimetable.find(r => r.id === lesson.doublePair);
     }
 
+    // Find teachers who have no teaching lessons or duties in the given slot
     function getAvailableTeachersForSlot(day, periodKey, excludeTeachers = []) {
       const busyTeachers = new Set();
       currentTimetable.forEach(r => {
         if (r.day === day && r.period === periodKey) {
+          if (r.teachers && Array.isArray(r.teachers)) {
+            r.teachers.forEach(t => busyTeachers.add(t));
+          } else if (r.teacher) {
+            busyTeachers.add(r.teacher);
+          }
+        }
+      });
+      excludeTeachers.forEach(t => busyTeachers.add(t));
+      return teacherList.filter(t => !busyTeachers.has(t));
+    }
+
     /* Console Mode Switch: Target vs Ideal vs Cover */
     function setConsoleMode(mode) {
       currentConsoleMode = mode;
@@ -770,6 +808,62 @@
         renderIdealRecommendations();
       }
     }
+
+    function resetDestOptions() {
+      const destSelect = document.getElementById('quick-dest-slot');
+      destSelect.innerHTML = '<option value="">-- 請先選擇調出課堂 --</option>';
+    }
+
+    function populateDestSlotOptions() {
+      const srcId = document.getElementById('quick-src-slot').value;
+      const destSelect = document.getElementById('quick-dest-slot');
+      const destDate = document.getElementById('quick-dest-date').value;
+      const destDay = getWeekdayFromDate(destDate);
+
+      if (!srcId) {
+        resetDestOptions();
+        return;
+      }
+
+      const srcLesson = currentTimetable.find(r => r.id === srcId);
+      if (!srcLesson) return;
+
+      const isSrcTutorial = isPeriod10Tutorial(srcLesson);
+
+      // Filter available target slots: same class lessons on target day, excluding duties and self
+      const candidates = currentTimetable.filter(r => {
+        if (r.day !== destDay) return false;
+        if (r.id === srcLesson.id) return false;
+        if (r.isDuty) return false;
+
+        // If tutorial, can swap with other tutorial even if different class
+        if (isSrcTutorial && isPeriod10Tutorial(r)) {
+          return true;
+        }
+
+        // Standard rule: must be same class
+        return r.className === srcLesson.className;
+      });
+
+      if (candidates.length === 0) {
+        destSelect.innerHTML = `<option value="">在 ${destDate} (${destDay}) 未檢測到 ${srcLesson.className}班 的其他科任課堂</option>`;
+        return;
+      }
+
+      let html = '<option value="">-- 請選擇對調之同班課節 --</option>';
+      candidates.forEach(c => {
+        const pName = getSlotCleanTitle(c.period);
+        const doubleTxt = c.isDouble ? ' [雙教節連堂]' : '';
+        const coTeachTxt = c.isCoTeaching ? ` [雙師: ${c.teachers.join('+')}]` : '';
+        const tutorialTxt = (isSrcTutorial && isPeriod10Tutorial(c)) ? ' ⭐[第10節導修互換]' : '';
+        const teacherTxt = c.teachers ? c.teachers.join(' & ') : c.teacher;
+
+        html += `<option value="${c.id}">${pName} | ${c.className}班 - ${c.subject} (任教: ${teacherTxt})${doubleTxt}${coTeachTxt}${tutorialTxt}</option>`;
+      });
+
+      destSelect.innerHTML = html;
+    }
+
     /* Render Ideal Recommendations (2. 理想調動演算法) */
     function renderIdealRecommendations() {
       const container = document.getElementById('ideal-recommendations-list');
@@ -791,13 +885,11 @@
       const srcLesson = currentTimetable.find(r => r.id === srcId);
       if (!srcLesson) return;
 
-      // Scan all potential candidates in the same class
       const candidates = [];
-      const srcTeachers = srcLesson.teachers;
+      const srcTeachers = srcLesson.teachers || [srcLesson.teacher];
       const isSrcDouble = !!srcLesson.isDouble;
       const isSrcCoTeach = srcLesson.isCoTeaching || srcTeachers.length > 1;
 
-      // Look across 5 days (priority: same day first, then other days)
       DAYS_ORDER.forEach(targetDay => {
         const isSameDay = (targetDay === srcDay);
         const dayLessons = currentTimetable.filter(r => 
@@ -810,13 +902,12 @@
         );
 
         dayLessons.forEach(targetLesson => {
-          const targetTeachers = targetLesson.teachers;
+          const targetTeachers = targetLesson.teachers || [targetLesson.teacher];
           const isTargetDouble = !!targetLesson.isDouble;
           const isTargetCoTeach = targetLesson.isCoTeaching || targetTeachers.length > 1;
 
           // Check conflict for ALL teachers in source group
           let srcGroupBlocked = false;
-          let srcBlockReason = '';
           for (const tA of srcTeachers) {
             const conflict = currentTimetable.find(r => 
               r.day === targetLesson.day && 
@@ -826,14 +917,12 @@
             );
             if (conflict) {
               srcGroupBlocked = true;
-              srcBlockReason = `${tA} 於 ${targetDay} ${getSlotCleanTitle(targetLesson.period)} 已有課堂 (${conflict.className} ${conflict.subject})`;
               break;
             }
           }
 
           // Check conflict for ALL teachers in target group
           let targetGroupBlocked = false;
-          let targetBlockReason = '';
           for (const tB of targetTeachers) {
             const conflict = currentTimetable.find(r => 
               r.day === srcLesson.day && 
@@ -843,12 +932,10 @@
             );
             if (conflict) {
               targetGroupBlocked = true;
-              targetBlockReason = `${tB} 於 ${srcDay} ${getSlotCleanTitle(srcLesson.period)} 已有課堂 (${conflict.className} ${conflict.subject})`;
               break;
             }
           }
 
-          // Scoring logic
           let score = 0;
           let notes = [];
 
@@ -890,7 +977,6 @@
         });
       });
 
-      // Sort candidates by score descending
       candidates.sort((a, b) => b.score - a.score);
 
       if (candidates.length === 0) {
@@ -901,14 +987,13 @@
               <span>未檢測到完全無衝突的直接對調方案</span>
             </div>
             <p class="text-[11px] text-amber-800">
-              該班其他科任教師在對應時段均有其他任教課節。建議切換至「<strong>找人代課</strong>」模式，或在「<strong>1. 目標調動</strong>」嘗試三方連鎖對調。
+              該班其他科任教師在對應時段均有其他任教課節。建議切換至「<strong>找人代課</strong>」模式，或在「<strong>1. 目標調動</strong>」嘗試跨日調換。
             </p>
           </div>
         `;
         return;
       }
 
-      // Render top recommended options
       container.innerHTML = candidates.map((cand, idx) => {
         const t = cand.targetLesson;
         const rankLabel = idx === 0 ? '🥇 最佳理想推薦' : (idx === 1 ? '🥈 次佳理想推薦' : `方案 ${idx + 1}`);
@@ -955,6 +1040,18 @@
     function diagnoseAndExecuteTargetSwap() {
       diagnoseAndExecuteSwap();
     }
+
+    function diagnoseAndExecuteCover() {
+      const srcId = document.getElementById('quick-src-slot').value;
+      const coverTeacher = document.getElementById('quick-cover-teacher-select').value;
+      const srcDate = document.getElementById('quick-src-date').value;
+      const srcDay = getWeekdayFromDate(srcDate);
+      const resultBox = document.getElementById('quick-swap-result-box');
+
+      if (!srcId || !coverTeacher) {
+        showGlobalMsg('請先選擇調出課節及空堂代課教師！', 'error');
+        return;
+      }
 
       const srcLesson = currentTimetable.find(r => r.id === srcId);
       if (!srcLesson) return;
@@ -1021,11 +1118,12 @@
         return;
       }
 
-      const groupATeachers = srcLesson.teachers;
-      const groupBTeachers = destLesson.teachers;
+      const groupATeachers = srcLesson.teachers || [srcLesson.teacher];
+      const groupBTeachers = destLesson.teachers || [destLesson.teacher];
       const isSameDate = srcDate === destDate;
       const isBothTutorial = isPeriod10Tutorial(srcLesson) && isPeriod10Tutorial(destLesson);
 
+      // Period 10 Tutorial special swap case
       if (isBothTutorial) {
         let tutorialConflicts = [];
         if (!isSameDate) {
@@ -1098,6 +1196,7 @@
         }
       }
 
+      // Check conflict for ALL teachers in source group
       const conflictsA = [];
       groupATeachers.forEach(tA => {
         const c = currentTimetable.find(r => 
@@ -1109,6 +1208,7 @@
         if (c) conflictsA.push({ teacher: tA, conflict: c });
       });
 
+      // Check conflict for ALL teachers in target group
       const conflictsB = [];
       groupBTeachers.forEach(tB => {
         const c = currentTimetable.find(r => 
@@ -1440,7 +1540,7 @@
       document.getElementById('src-slot-info-box').classList.add('hidden');
       document.getElementById('cover-eligible-badge').classList.add('hidden');
       document.getElementById('quick-swap-result-box').classList.add('hidden');
-      setConsoleMode('swap');
+      setConsoleMode('target');
     }
 
     function handleLockDateChange() {
@@ -1946,7 +2046,7 @@
       let idCounter = 1;
 
       DAYS_ORDER.forEach(day => {
-        DAILY_18_SLOTS.forEach((slot, sIdx) => {
+        DAILY_18_SLOTS.forEach((slot) => {
           if (slot.key === 'S01') {
             sample.push({
               id: `demo_${idCounter++}`,
