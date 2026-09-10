@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-HK" class="text-[14px] sm:text-[15px] xl:text-[16px]">
+<html lang="zh-HK" class="text-[15px] sm:text-[16px] xl:text-[17px] 2xl:text-[18px]">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>2026/27年度  滬江小學 調課與代課系統</title>
+  <title>2026/27年度滬江小學 智能調課與代課系統</title>
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -65,18 +65,18 @@
 
   <!-- Top Navigation Bar -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
-    <div class="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between gap-4">
+    <div class="max-w-[1850px] mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
       <div class="flex items-center gap-3.5 min-w-0">
-        <div class="w-11 h-11 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-200 shrink-0">
+        <div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-200 shrink-0">
           <i class="ph ph-calendar-check text-2xl font-bold"></i>
         </div>
         <div class="truncate">
-          <h1 class="text-base sm:text-xl font-black text-slate-900 tracking-tight flex items-center gap-2.5 flex-wrap">
-            <span>滬江小學 調課與代課系統</span>
-            <span class="text-xs font-black px-2.5 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200">2026/27年度校本行政規範</span>
+          <h1 class="text-lg sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5 flex-wrap">
+            <span>滬江小學 智能調課與代課系統</span>
+            <span class="text-xs sm:text-sm font-black px-2.5 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200">2026/27年度滬江小學</span>
           </h1>
-          <p class="text-xs sm:text-sm font-semibold text-slate-500 truncate mt-0.5">
-            
+          <p class="text-xs sm:text-sm font-bold text-slate-500 truncate mt-0.5">
+            全課節開放代課・同班科任對調・P班雙師同步連動・體育≤2班・電腦≤1班・高小視藝≤1班・自動三方/四方互調
           </p>
         </div>
       </div>
@@ -84,48 +84,50 @@
       <!-- Quick Action Controls & Constraints Badge -->
       <div class="flex items-center gap-2.5 flex-wrap shrink-0">
         <!-- Venue Constraints Badges -->
-        <div class="hidden xl:flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 border border-slate-300 text-xs font-black text-slate-700 shadow-2xs">
+        <div class="hidden xl:flex items-center gap-2.5 px-4 py-2 rounded-xl bg-slate-100 border border-slate-300 text-xs sm:text-sm font-black text-slate-700 shadow-2xs">
           <span class="inline-flex items-center gap-1.5 text-emerald-700"><i class="ph ph-soccer-ball text-base"></i> 體育 ≤ 2班</span>
           <span class="text-slate-300 font-normal">|</span>
           <span class="inline-flex items-center gap-1.5 text-blue-700"><i class="ph ph-desktop text-base"></i> 電腦 ≤ 1班</span>
+          <span class="text-slate-300 font-normal">|</span>
+          <span class="inline-flex items-center gap-1.5 text-purple-700"><i class="ph ph-palette text-base"></i> 視藝(P4-6) ≤ 1班</span>
         </div>
 
         <!-- Irregular Lessons Lock Button -->
-        <button onclick="openSpecialLockModal()" class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 rounded-xl font-black text-xs sm:text-sm transition flex items-center gap-1.5 shadow-2xs active:scale-95">
+        <button onclick="openSpecialLockModal()" class="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 rounded-xl font-black text-xs sm:text-sm transition flex items-center gap-1.5 shadow-2xs active:scale-95">
           <i class="ph ph-lock-key text-base"></i>
-          <span>鎖定校本課堂</span>
+          <span>鎖定校外導師/特殊課堂</span>
           <span id="locked-count-badge" class="px-2 py-0.5 rounded-full bg-rose-200 text-rose-900 text-xs font-black">0</span>
         </button>
 
         <!-- Import Timetable Button -->
-        <button onclick="openImportModal()" class="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-300 rounded-xl font-black text-xs sm:text-sm transition flex items-center gap-1.5 shadow-2xs active:scale-95">
+        <button onclick="openImportModal()" class="px-4 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-300 rounded-xl font-black text-xs sm:text-sm transition flex items-center gap-1.5 shadow-2xs active:scale-95">
           <i class="ph ph-file-arrow-up text-base"></i>
-          <span>匯入課表 (Excel/CSV)</span>
+          <span>匯入教師課表 (Excel/CSV)</span>
         </button>
       </div>
     </div>
   </header>
 
   <!-- Global Floating Notice Toast -->
-  <div id="global-toast" class="fixed top-22 right-8 z-50 transform transition-all duration-300 translate-y-[-100%] opacity-0 pointer-events-none">
-    <div id="global-toast-box" class="px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 text-sm font-black border">
-      <i id="global-toast-icon" class="text-lg ph ph-check-circle"></i>
+  <div id="global-toast" class="fixed top-24 right-8 z-50 transform transition-all duration-300 translate-y-[-100%] opacity-0 pointer-events-none">
+    <div id="global-toast-box" class="px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 text-sm sm:text-base font-black border">
+      <i id="global-toast-icon" class="text-xl ph ph-check-circle"></i>
       <span id="global-toast-text">通知訊息</span>
     </div>
   </div>
 
-  <main class="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 flex-1 w-full">
+  <main class="max-w-[1850px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 flex-1 w-full">
 
     <!-- Section 1: Interactive Swap & Cover Console (調課與代課控制台) -->
     <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-5">
       <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-4">
         <div>
-          <h2 class="text-base sm:text-xl font-black text-slate-900 flex items-center gap-2.5">
+          <h2 class="text-lg sm:text-2xl font-black text-slate-900 flex items-center gap-2.5">
             <i class="ph ph-arrows-left-right text-indigo-600 text-2xl"></i>
-            <span>調課與代課控制台</span>
+            <span>課堂調動與代課控制台</span>
           </h2>
           <p class="text-xs sm:text-sm font-semibold text-slate-500 mt-1">
-            自動搜尋互調方案
+            每一節均可自由選擇直接代課・可選單節對調・P班雙師同步連動・直調受阻自動啟動三方/四方互調
           </p>
         </div>
 
@@ -137,11 +139,11 @@
           </button>
           <button onclick="setConsoleMode('ideal')" id="mode-btn-ideal" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-black transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900">
             <i class="ph ph-sparkle text-amber-500 text-base"></i>
-            <span>2. 最佳調動推薦</span>
+            <span>2. 理想調動(全域推薦)</span>
           </button>
           <button onclick="setConsoleMode('cover')" id="mode-btn-cover" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-black transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900">
             <i class="ph ph-user-switch text-emerald-600 text-base"></i>
-            <span>代課安排</span>
+            <span>找人代課 (全課節可用)</span>
           </button>
         </div>
       </div>
@@ -168,7 +170,7 @@
 
           <!-- Applicant Teacher Dropdown -->
           <div>
-            <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5">申請教師：</label>
+            <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5">申請教師 (某人)：</label>
             <select id="quick-teacher-select" onchange="handleTeacherSelectChange()" class="w-full bg-white border border-slate-300 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs">
               <option value="">-- 請先選擇申請教師 --</option>
             </select>
@@ -188,10 +190,10 @@
           </div>
         </div>
 
-        <!-- Right Column: Mode Panels (1. 目標調課, 2. 最佳安排, 3. 代課安排) -->
+        <!-- Right Column: Mode Panels (1. 目標調動, 2. 理想調動, 3. 找人代課) -->
         <div class="lg:col-span-7 space-y-4">
 
-          <!-- Mode 1: Target Swap Panel (目標調課面板) -->
+          <!-- Mode 1: Target Swap Panel (目標調動面板) -->
           <div id="panel-target-swap" class="space-y-4">
             <div class="bg-indigo-50/60 rounded-2xl p-5 border border-indigo-100 space-y-4">
               <div class="flex items-center justify-between">
@@ -212,17 +214,21 @@
 
               <!-- Destination Lesson Dropdown -->
               <div>
-                <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5">目標同班對調課堂：</label>
-                <select id="quick-dest-slot" class="w-full bg-white border border-slate-300 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs">
+                <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-1.5">目標同班對調課堂 (或選頂部直接代課)：</label>
+                <select id="quick-dest-slot" onchange="handleDestSlotChange()" class="w-full bg-white border border-slate-300 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs">
                   <option value="">-- 請先選定調出課堂 --</option>
                 </select>
               </div>
 
               <!-- Diagnostic Execution Button -->
-              <div class="pt-2 flex items-center justify-end gap-3">
+              <div class="pt-2 flex items-center justify-between flex-wrap gap-3">
+                <button type="button" onclick="setConsoleMode('cover')" class="text-xs sm:text-sm text-amber-700 hover:text-amber-800 font-black flex items-center gap-1 hover:underline">
+                  <i class="ph ph-user-switch text-base"></i>
+                  <span>不想調換課節？改用直接找人代課 ➔</span>
+                </button>
                 <button onclick="diagnoseAndExecuteSwap()" class="w-full sm:w-auto px-6 py-3 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-black rounded-xl text-xs sm:text-sm shadow-md shadow-indigo-200 transition flex items-center justify-center gap-2">
                   <i class="ph ph-magic-wand text-lg"></i>
-                  <span>一鍵診斷</span>
+                  <span>一鍵診斷調動 (受阻自動啟動三方/四方互調)</span>
                 </button>
               </div>
             </div>
@@ -233,21 +239,21 @@
             </div>
           </div>
 
-          <!-- Mode 2: Ideal Swap Recommendations (最佳調課安排推薦) -->
+          <!-- Mode 2: Ideal Swap Recommendations (智能推薦清單) -->
           <div id="panel-ideal-swap" class="hidden space-y-4">
             <div class="p-4 rounded-2xl bg-indigo-50 border border-indigo-200 text-indigo-950 text-xs sm:text-sm space-y-1.5">
               <div class="font-black flex items-center justify-between">
                 <div class="flex items-center gap-2">
                   <i class="ph ph-sparkle text-amber-500 text-lg"></i>
-                  <span>2. 最佳調課安排推薦：</span>
+                  <span>2. 智能演算法 (全域最佳方案推薦)：</span>
                 </div>
                 <div class="flex items-center gap-1.5 text-xs text-indigo-700 bg-white px-2.5 py-1 rounded-lg border border-indigo-200 font-black">
                   <i class="ph ph-shield-check text-emerald-600 text-sm"></i>
-                  
+                  <span>體育≤2班・電腦≤1班・視藝(P4-6)≤1班</span>
                 </div>
               </div>
               <p class="text-xs sm:text-sm text-indigo-900 leading-relaxed font-semibold">
-                自動搜尋優先排序
+                系統自動於全班課堂範圍搜尋合規調動路徑（包含雙方對調、三方互調與四方互調），依「同日優先」、「無撞堂」、「場地合規」綜合排序。
               </p>
             </div>
 
@@ -255,7 +261,7 @@
             <div class="flex items-center gap-2 border-b border-slate-200 pb-3 text-xs sm:text-sm flex-wrap">
               <span class="text-slate-400 font-black">方案篩選：</span>
               <button onclick="setIdealFilter('all')" id="ideal-filter-all" class="px-3 py-1.5 rounded-lg font-black bg-indigo-600 text-white shadow-2xs">全部方案</button>
-              <button onclick="setIdealFilter('2way')" id="ideal-filter-2way" class="px-3 py-1.5 rounded-lg font-bold bg-white border border-slate-200 text-slate-700 hover:text-slate-950">雙方對調</button>
+              <button onclick="setIdealFilter('2way')" id="ideal-filter-2way" class="px-3 py-1.5 rounded-lg font-bold bg-white border border-slate-200 text-slate-700 hover:text-slate-950">雙方直調 (2-Way)</button>
               <button onclick="setIdealFilter('3way')" id="ideal-filter-3way" class="px-3 py-1.5 rounded-lg font-bold bg-white border border-slate-200 text-slate-700 hover:text-slate-950">三方互調 (3-Way)</button>
               <button onclick="setIdealFilter('4way')" id="ideal-filter-4way" class="px-3 py-1.5 rounded-lg font-bold bg-white border border-slate-200 text-slate-700 hover:text-slate-950">四方互調 (4-Way)</button>
             </div>
@@ -263,25 +269,25 @@
             <!-- List of ideal options -->
             <div id="ideal-recommendations-list" class="space-y-3 max-h-[380px] overflow-y-auto pr-1">
               <div class="p-6 text-center text-slate-400 text-xs sm:text-sm font-bold bg-white rounded-2xl border border-slate-200">
-                請在左側選定調出日期與課節，系統即刻演算最佳方案
+                請在左側選定調出日期與課節，系統即刻演算最佳理想方案
               </div>
             </div>
           </div>
 
-          <!-- Mode 3: Substitute Cover Panel (代課安排面板) -->
+          <!-- Mode 3: Substitute Cover Panel (全課節代課面板) -->
           <div id="panel-cover-swap" class="hidden space-y-4">
             <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 text-xs sm:text-sm space-y-1.5">
               <div class="font-black flex items-center gap-2 text-amber-900 text-sm sm:text-base">
                 <i class="ph ph-user-check text-amber-600 text-xl"></i>
-                <span>導修／班主任節／當值代課</span>
+                <span>全課節通用代課通道 (普通學科／專科／導修／班主任／當值)</span>
               </div>
               <p class="text-xs sm:text-sm text-amber-800 leading-relaxed font-semibold">
-                導修、班主任節或當值自動篩選空堂同事
+                任何課堂皆可直接指派代課！系統自動篩選該節全校完全沒有授課、沒有當值之空堂同事代任，免動同班課節次序。
               </p>
             </div>
 
             <div class="bg-white rounded-2xl p-5 border border-slate-200 space-y-4 shadow-2xs">
-              <label class="block text-xs sm:text-sm font-black text-slate-700">該節全校空堂可代課教師名單：</label>
+              <label id="cover-target-label" class="block text-xs sm:text-sm font-black text-slate-700">該節全校空堂可代課教師名單：</label>
               <select id="cover-teacher-select" class="w-full bg-white border border-slate-300 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-2xs">
                 <option value="">-- 請先在左側選取課堂 --</option>
               </select>
@@ -289,7 +295,7 @@
               <div class="pt-2 flex justify-end">
                 <button onclick="diagnoseAndExecuteCover()" class="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 active:scale-95 text-white font-black rounded-xl text-xs sm:text-sm shadow-md shadow-amber-200 transition flex items-center gap-2">
                   <i class="ph ph-check-circle text-lg"></i>
-                  <span>確認指派代課並生成代課通知單</span>
+                  <span>確認指派代課並生成滬江小學校本代課通知表格</span>
                 </button>
               </div>
             </div>
@@ -298,7 +304,8 @@
         </div>
       </div>
     </div>
-    <!-- Section 2: Interactive Timetable Display & Filter (全校課表檢視) -->
+
+    <!-- Section 2: Interactive Timetable Display & Filter (全校課表檢視盤) -->
     <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-5">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
         <div class="flex items-center gap-3">
@@ -306,9 +313,9 @@
             <i class="ph ph-table text-xl"></i>
           </div>
           <div>
-            <h3 class="text-base sm:text-lg font-black text-slate-900">全校課表檢視 (每天完整流向)</h3>
+            <h3 class="text-base sm:text-lg font-black text-slate-900">全校課表檢視盤 (每天18節完整流向)</h3>
             <p class="text-xs sm:text-sm font-semibold text-slate-500">
-              已調課與代課標籤
+              清晰醒目顯示P班兩位科任・連堂提醒・已調與代課標籤
             </p>
           </div>
         </div>
@@ -355,8 +362,8 @@
             <i class="ph ph-receipt text-xl"></i>
           </div>
           <div>
-            <h3 class="text-base sm:text-lg font-black text-slate-900">調課與代課紀錄</h3>
-            <p class="text-xs sm:text-sm font-semibold text-slate-500">每筆紀錄具備獨立編號</p>
+            <h3 class="text-base sm:text-lg font-black text-slate-900">調課與代課立案紀錄簿</h3>
+            <p class="text-xs sm:text-sm font-semibold text-slate-500">每筆紀錄具備獨立校本公文編號，隨時支援紅色【退回】精確還原</p>
           </div>
         </div>
 
@@ -371,19 +378,20 @@
       <!-- Audit Cards List -->
       <div id="swap-history-container" class="space-y-3.5">
         <div class="p-6 text-center text-slate-400 text-xs sm:text-sm font-bold bg-slate-50 rounded-2xl border border-slate-200">
-          尚未有調課或代課記錄。當您在上方確認調動後，紀錄將即時存檔並可輸出調課紙。
+          尚未有調課或代課記錄。當您在上方確認調動後，紀錄將即時存檔並可輸出調課通知表格。
         </div>
       </div>
     </div>
 
   </main>
-  <!-- MODAL 1: Official Shanghai Alumni Primary School Swap Slip (滬江小學調課安排通知單) -->
+
+  <!-- MODAL 1: Official Shanghai Alumni Primary School Swap Slip (滬江小學調課安排通知表格) -->
   <div id="slip-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4">
     <div class="bg-white rounded-3xl shadow-2xl max-w-3xl w-full max-h-[92vh] flex flex-col overflow-hidden border border-slate-200 animate-in fade-in zoom-in duration-150">
       <div class="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
         <div class="flex items-center gap-2.5 text-indigo-950 font-black text-sm sm:text-base">
           <i class="ph ph-printer text-xl text-indigo-600"></i>
-          <span>滬江小學 校本調課／代課通知單</span>
+          <span>2026/27年度 滬江小學 校本調課／代課通知表格</span>
         </div>
         <button onclick="closeSlipModal()" class="w-9 h-9 rounded-xl hover:bg-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-800 transition">
           <i class="ph ph-x text-lg"></i>
@@ -404,20 +412,20 @@
         <div class="flex items-center gap-3">
           <button onclick="window.print()" class="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs sm:text-sm shadow-md shadow-indigo-200 transition flex items-center gap-2 active:scale-95">
             <i class="ph ph-printer text-base"></i>
-            <span>列印調課安排單 (Print)</span>
+            <span>列印調課安排表格 (Print)</span>
           </button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- MODAL 2: Irregular / Special Activity Lock Registration (鎖定不定期課堂) -->
+  <!-- MODAL 2: Irregular / Special Activity Lock Registration (鎖定不定期特殊課堂) -->
   <div id="lock-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4">
     <div class="bg-white rounded-3xl shadow-2xl max-w-xl w-full p-6 space-y-4 border border-slate-200">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
         <div class="flex items-center gap-2 text-rose-900 font-black text-base">
           <i class="ph ph-lock-key text-xl text-rose-600"></i>
-          <span>鎖定不定期課堂 (禁止調動)</span>
+          <span>登記不定期特殊課堂鎖定 (禁止調動)</span>
         </div>
         <button onclick="closeSpecialLockModal()" class="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700">
           <i class="ph ph-x text-base"></i>
@@ -425,7 +433,7 @@
       </div>
 
       <p class="text-xs sm:text-sm text-slate-500 leading-relaxed font-semibold">
-        可指定特定日期（例如講座、活動），防止課堂被任意調走。
+        可指定特定教學日期（例如校外導師、講座、全方位活動日），防止課堂被任意調走。
       </p>
 
       <div class="space-y-3.5 text-xs sm:text-sm">
@@ -468,7 +476,7 @@
           </div>
           <div>
             <label class="block font-bold text-slate-700 mb-1">活動名稱：</label>
-            <input type="text" id="lock-reason" placeholder="例如：講座 / 週會" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 font-bold">
+            <input type="text" id="lock-reason" placeholder="例如：校外導師課 / STEAM活動" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 font-bold">
           </div>
         </div>
       </div>
@@ -483,7 +491,7 @@
 
       <div class="pt-2 flex items-center justify-end gap-2.5">
         <button onclick="closeSpecialLockModal()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-xs sm:text-sm">取消</button>
-        <button onclick="addSpecialLock()" class="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs sm:text-sm shadow-xs">確認鎖定保護</button>
+        <button onclick="addSpecialLock()" class="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs sm:text-sm shadow-xs">確認加入鎖定保護</button>
       </div>
     </div>
   </div>
@@ -494,7 +502,7 @@
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
         <div class="flex items-center gap-2 text-indigo-900 font-black text-base">
           <i class="ph ph-file-arrow-up text-xl text-indigo-600"></i>
-          <span>匯入全校課表資料 (Excel / CSV)</span>
+          <span>匯入全校教師課表 (Excel / CSV)</span>
         </div>
         <button onclick="closeImportModal()" class="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700">
           <i class="ph ph-x text-base"></i>
@@ -510,7 +518,7 @@
       <!-- Tab 1: File Upload -->
       <div id="import-file-section" class="space-y-3 text-xs sm:text-sm">
         <p class="text-slate-500 leading-relaxed font-semibold">
-          支援《2627_科任上課紙表.xlsx》（第一列為教師名單、第二列起為課節），或標準 CSV 排課試算表。
+          支援《2627_全體科任上課當值總表.xlsx》（第一列為教師名單、第二列起為課節），或標準 CSV 排課試算表。
         </p>
         <div class="border-2 border-dashed border-slate-300 rounded-2xl p-6 text-center hover:border-indigo-400 transition bg-slate-50 cursor-pointer" onclick="document.getElementById('timetable-file-input').click()">
           <i class="ph ph-cloud-arrow-up text-4xl text-indigo-500 mb-2"></i>
@@ -539,8 +547,9 @@
       </div>
     </div>
   </div>
+
   <script>
-    /* 18 Daily Slots Structure (嚴格對齊全日課表) */
+    /* 18 Daily Slots Structure (嚴格對齊全日課節) */
     const DAILY_18_SLOTS = [
       { key: 'S01', title: '早上當值1', time: '07:30 - 08:15', isDuty: true },
       { key: 'S02', title: '早上當值2', time: '07:45 - 08:15', isDuty: true },
@@ -577,6 +586,24 @@
     let currentViewMode = 'class'; // 'class' or 'teacher'
     let currentIdealFilter = 'all'; // 'all', '2way', '3way', '4way'
     let cachedIdealCandidates = [];
+    let activeClashCycles = [];
+
+    /* Clean Slot Title */
+    function getSlotCleanTitle(periodKey) {
+      const s = DAILY_18_SLOTS.find(x => x.key === periodKey);
+      return s ? `${s.title} (${s.time})` : periodKey;
+    }
+
+    /* Convert calendar date YYYY-MM-DD to Hong Kong Weekday */
+    function getWeekdayFromDate(dateStr) {
+      if (!dateStr) return '星期一';
+      const d = new Date(dateStr + 'T00:00:00');
+      if (isNaN(d.getTime())) return '星期一';
+      const days = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+      const hkDay = days[d.getDay()];
+      return DAYS_ORDER.includes(hkDay) ? hkDay : '星期一';
+    }
+
     /* Venue Capacity Rules: PE <= 2 classes, Computer <= 1 class, Senior VA (P4-P6) <= 1 class */
     function isPESubject(sub) {
       return /體育|PE|P\.E\./i.test(sub || '');
@@ -670,8 +697,7 @@
         return !currentTimetable.some(r => 
           r.day === targetDay && 
           r.period === targetPeriod && 
-          r.teachers && 
-          r.teachers.includes(t) && 
+          (r.teachers ? r.teachers.includes(t) : r.teacher === t) && 
           !movingOutLessonIds.includes(r.id)
         );
       });
@@ -683,12 +709,12 @@
         const hasLesson = currentTimetable.some(r => 
           r.day === day && 
           r.period === periodKey && 
-          r.teachers && 
-          r.teachers.includes(t)
+          (r.teachers ? r.teachers.includes(t) : r.teacher === t)
         );
         return !hasLesson;
       });
     }
+
     function handleSrcDateChange() {
       const srcDate = document.getElementById('quick-src-date').value;
       const day = getWeekdayFromDate(srcDate);
@@ -726,8 +752,7 @@
 
       const teacherSlots = currentTimetable.filter(r => 
         r.day === currentDay && 
-        r.teachers && 
-        r.teachers.includes(teacher)
+        (r.teachers ? r.teachers.includes(teacher) : r.teacher === teacher)
       );
 
       if (teacherSlots.length === 0) {
@@ -739,7 +764,7 @@
         let tag = '';
         if (s.isDouble) tag += ' [連堂]';
         if (s.isCoTeaching) tag += ` [P班兩位老師: ${s.teachers.join('&')}]`;
-        if (isPeriod10Tutorial(s)) tag += ' [導修]';
+        if (isPeriod10Tutorial(s)) tag += ' [導修可互換/代課]';
         if (s.isDuty) tag += ' [當值]';
         tag += ' [可代課]';
 
@@ -766,14 +791,15 @@
       const tags = [];
       if (srcLesson.isDouble) tags.push('<span class="text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-md font-black border border-amber-300">連堂 (可單節靈活調動)</span>');
       if (srcLesson.isCoTeaching) tags.push(`<span class="text-indigo-900 bg-indigo-100 px-2.5 py-0.5 rounded-md font-black border border-indigo-300">P班兩位老師 (${srcLesson.teachers.join(' & ')})</span>`);
-      if (isPeriod10Tutorial(srcLesson)) tags.push('<span class="text-emerald-900 bg-emerald-100 px-2.5 py-0.5 rounded-md font-black border border-emerald-300">第10節導修</span>');
+      if (isPeriod10Tutorial(srcLesson)) tags.push('<span class="text-emerald-900 bg-emerald-100 px-2.5 py-0.5 rounded-md font-black border border-emerald-300">第10節導修 (支援跨班互換)</span>');
       if (srcLesson.isDuty) tags.push('<span class="text-blue-900 bg-blue-100 px-2.5 py-0.5 rounded-md font-black border border-blue-300">當值項目</span>');
       tags.push('<span class="text-teal-900 bg-teal-100 px-2.5 py-0.5 rounded-md font-black border border-teal-300">此節支援代課</span>');
 
+      const teachersLabel = srcLesson.teachers ? srcLesson.teachers.join(' & ') : srcLesson.teacher;
       infoBox.innerHTML = `
         <div class="flex items-center gap-2 flex-wrap">${tags.join('')}</div>
         <div class="text-xs sm:text-sm text-slate-800 font-bold pt-1">
-          <strong>課堂明細：</strong> ${srcLesson.className}班 | ${srcLesson.subject} | 授課：<span class="text-indigo-700 font-black">${srcLesson.teachers.join(' & ')}</span>
+          <strong>課堂明細：</strong> ${srcLesson.className}班 | ${srcLesson.subject} | 授課：<span class="text-indigo-700 font-black">${teachersLabel}</span>
         </div>
       `;
       infoBox.classList.remove('hidden');
@@ -819,7 +845,7 @@
       // Always offer direct substitute option on top for ANY lesson
       const directCoverOpt = document.createElement('option');
       directCoverOpt.value = '__SWITCH_TO_COVER__';
-      directCoverOpt.textContent = '👤 【直接代課】不調課，改由空堂老師代課 (點選切換)';
+      directCoverOpt.textContent = '👤 【直接代課】不調換課節，改由空堂老師代課 (點選切換)';
       destSelect.appendChild(directCoverOpt);
 
       const isSrcTutorial = isPeriod10Tutorial(srcLesson);
@@ -878,7 +904,7 @@
 
       const applicantTeacher = document.getElementById('quick-teacher-select').value;
       if (labelElem) {
-        labelElem.innerText = `為【${srcLesson.className}班 ${srcLesson.subject}】(${applicantTeacher || srcLesson.teacher}) 選擇代課教師：`;
+        labelElem.innerText = `為【${srcLesson.className}班 ${srcLesson.subject}】(${applicantTeacher || (srcLesson.teachers ? srcLesson.teachers.join('&') : srcLesson.teacher)}) 選擇代課教師：`;
       }
 
       const available = getAvailableTeachersForSlot(srcLesson.day, srcLesson.period, srcLesson.teachers || [srcLesson.teacher]);
@@ -894,6 +920,7 @@
         coverSelect.appendChild(opt);
       });
     }
+
     function diagnoseAndExecuteSwap() {
       const srcId = document.getElementById('quick-src-slot').value;
       const destId = document.getElementById('quick-dest-slot').value;
@@ -903,6 +930,13 @@
 
       if (!srcId || !destId) {
         showGlobalMsg('請先選定調出課節及目標對調課節！', 'error');
+        return;
+      }
+
+      // Gracefully switch to cover mode if user chose direct substitute
+      if (destId === '__SWITCH_TO_COVER__') {
+        setConsoleMode('cover');
+        showGlobalMsg('已自動為您切換至「找人代課」模式！', 'info');
         return;
       }
 
@@ -922,22 +956,22 @@
         resultBox.innerHTML = `
           <div class="font-black text-rose-900 flex items-center gap-2 text-base">
             <i class="ph ph-prohibit text-xl"></i>
-            <span>調課已被攔截：包含已鎖定之校本課程活動</span>
+            <span>調課已被攔截：包含已鎖定之特殊活動課堂</span>
           </div>
-          <p class="text-rose-800 font-semibold leading-relaxed">所選課節已在「課堂鎖定區」保護，禁止調動。</p>
+          <p class="text-rose-800 font-semibold leading-relaxed">所選課節已在「校外導師/特殊課堂鎖定區」登記保護，禁止調動以保障學校特定活動正常舉行。</p>
         `;
         resultBox.classList.remove('hidden');
         return;
       }
 
-      // Venue capacity check
+      // Venue capacity check (PE <= 2, Computer <= 1, Senior VA <= 1)
       const peCompA = checkVenueCapacityConflict(destLesson.day, destLesson.period, srcLesson.subject, [destLesson.id], srcLesson.className);
       if (peCompA.conflict) {
         resultBox.className = 'rounded-2xl p-5 text-xs sm:text-sm border bg-rose-50 border-rose-300 text-rose-950 space-y-2';
         resultBox.innerHTML = `
           <div class="flex items-center gap-2 font-black text-rose-900 text-base">
             <i class="ph ph-prohibit text-xl"></i>
-            <span>場地限制：調動被攔截</span>
+            <span>場地容量限制：調動被攔截</span>
           </div>
           <div class="text-xs sm:text-sm text-rose-800 bg-white p-3 rounded-xl border border-rose-200 leading-relaxed font-semibold">
             ${peCompA.reason}
@@ -953,7 +987,7 @@
         resultBox.innerHTML = `
           <div class="flex items-center gap-2 font-black text-rose-900 text-base">
             <i class="ph ph-prohibit text-xl"></i>
-            <span>場地限制：調動被攔截</span>
+            <span>場地容量限制：調動被攔截</span>
           </div>
           <div class="text-xs sm:text-sm text-rose-800 bg-white p-3 rounded-xl border border-rose-200 leading-relaxed font-semibold">
             ${peCompB.reason}
@@ -969,14 +1003,20 @@
       // Check teacher clashes (ALL co-teachers must have no conflict)
       const clashA = [];
       groupATeachers.forEach(t => {
-        const c = currentTimetable.find(r => r.day === destLesson.day && r.period === destLesson.period && r.teachers && r.teachers.includes(t) && r.id !== destLesson.id);
-        if (c) clashA.push(`${t} 在 ${destLesson.day} ${getSlotCleanTitle(destLesson.period)} 需任教 ${c.className} ${c.subject}`);
+        const c = currentTimetable.find(r => r.day === destLesson.day && r.period === destLesson.period && (r.teachers ? r.teachers.includes(t) : r.teacher === t) && r.id !== destLesson.id);
+        if (c) {
+          const detail = c.className !== '全校' ? `${c.className} ${c.subject}` : c.subject;
+          clashA.push(`${t} 在 ${destLesson.day} ${getSlotCleanTitle(destLesson.period)} 需任教/當值 ${detail}`);
+        }
       });
 
       const clashB = [];
       groupBTeachers.forEach(t => {
-        const c = currentTimetable.find(r => r.day === srcLesson.day && r.period === srcLesson.period && r.teachers && r.teachers.includes(t) && r.id !== srcLesson.id);
-        if (c) clashB.push(`${t} 在 ${srcLesson.day} ${getSlotCleanTitle(srcLesson.period)} 需任教 ${c.className} ${c.subject}`);
+        const c = currentTimetable.find(r => r.day === srcLesson.day && r.period === srcLesson.period && (r.teachers ? r.teachers.includes(t) : r.teacher === t) && r.id !== srcLesson.id);
+        if (c) {
+          const detail = c.className !== '全校' ? `${c.className} ${c.subject}` : c.subject;
+          clashB.push(`${t} 在 ${srcLesson.day} ${getSlotCleanTitle(srcLesson.period)} 需任教/當值 ${detail}`);
+        }
       });
 
       if (clashA.length === 0 && clashB.length === 0) {
@@ -986,14 +1026,14 @@
           <div class="flex items-center justify-between flex-wrap gap-2">
             <div class="flex items-center gap-2 font-black text-emerald-900 text-sm sm:text-base">
               <i class="ph ph-check-circle text-2xl text-emerald-600"></i>
-              <span>調課診斷：雙方對調無衝突</span>
+              <span>調動診斷：雙方直接對調完全合規無衝突</span>
             </div>
             <span class="text-xs px-3 py-1 rounded-lg bg-emerald-100 text-emerald-900 font-black border border-emerald-300">
-              ${groupATeachers.length > 1 || groupBTeachers.length > 1 ? 'P班課堂同步連動' : '單節科任直接對調'}
+              ${groupATeachers.length > 1 || groupBTeachers.length > 1 ? 'P班兩位老師同步連動' : '單節科任直接對調'}
             </span>
           </div>
           <div class="bg-white p-3.5 rounded-xl border border-emerald-200 text-xs sm:text-sm space-y-1.5 font-semibold text-slate-800">
-            <p><strong>調課詳情：</strong> [${srcLesson.className}班] <span class="text-indigo-700 font-black">${groupATeachers.join(' & ')}</span> (${srcLesson.subject}) ⇄ <span class="text-indigo-700 font-black">${groupBTeachers.join(' & ')}</span> (${destLesson.subject})</p>
+            <p><strong>調動詳情：</strong> [${srcLesson.className}班] <span class="text-indigo-700 font-black">${groupATeachers.join(' & ')}</span> (${srcLesson.subject}) ⇄ <span class="text-indigo-700 font-black">${groupBTeachers.join(' & ')}</span> (${destLesson.subject})</p>
             <p><strong>申請方原時段：</strong> ${srcDate} (${srcLesson.day}) ${getSlotCleanTitle(srcLesson.period)}</p>
             <p><strong>受調方原時段：</strong> ${destDate} (${destLesson.day}) ${getSlotCleanTitle(destLesson.period)}</p>
             ${srcLesson.isDouble || destLesson.isDouble ? '<p class="text-amber-800 font-black text-xs">⚠️ 連堂提示：此調動為單節調整，請留意連堂後續課堂之銜接。</p>' : ''}
@@ -1001,7 +1041,7 @@
           <div class="pt-1 flex justify-end">
             <button onclick="executeSwapBetweenLessons('${srcLesson.id}', '${destLesson.id}')" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black rounded-xl shadow-md transition flex items-center gap-2">
               <i class="ph ph-calendar-check text-lg"></i>
-              <span>調課確認並生成滬江小學調課通知</span>
+              <span>確認套用課堂安排並生成滬江小學調課通知表格</span>
             </button>
           </div>
         `;
@@ -1021,10 +1061,10 @@
             <div class="flex items-center justify-between flex-wrap gap-2">
               <div class="flex items-center gap-2 font-black text-indigo-950 text-sm sm:text-base">
                 <i class="ph ph-arrows-clockwise text-indigo-600 text-xl animate-spin" style="animation-duration: 4s;"></i>
-                <span>已自動啟動互調！為您找到 ${cycleSolutions.length} 個替代方案：</span>
+                <span>已自動啟動智能調課！為您找到 ${cycleSolutions.length} 個替代方案：</span>
               </div>
               <span class="text-xs px-2.5 py-1 rounded-lg bg-indigo-100 text-indigo-900 font-black border border-indigo-200">
-                自動消解衝突
+                自動消解撞堂
               </span>
             </div>
 
@@ -1037,7 +1077,7 @@
                       <span>${sol.typeName}</span>
                     </span>
                     <span class="text-xs font-black px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
-                      完全無衝突
+                      完全無衝突・場地合規
                     </span>
                   </div>
                   <p class="text-xs sm:text-sm text-slate-800 font-bold leading-relaxed">${sol.description}</p>
@@ -1062,7 +1102,7 @@
         cycleSolutionsHtml = `
           <div class="pt-2 border-t border-amber-200 text-xs sm:text-sm text-slate-700 space-y-1 font-bold">
             <p><strong>💡 智能建議：</strong></p>
-            <p>在同班範圍內暫未能安排調課。建議點選 <strong>「代課安排」</strong> 模式，直接安排代課。</p>
+            <p>在同班範圍內暫未能組成無衝突之調動安排。建議點選上方 <strong>「找人代課」</strong> 模式，直接委派該節空堂同事代課。</p>
           </div>
         `;
       }
@@ -1070,7 +1110,7 @@
       resultBox.innerHTML = `
         <div class="flex items-center gap-2 font-black text-amber-900 text-sm sm:text-base">
           <i class="ph ph-warning-octagon text-2xl text-amber-600"></i>
-          <span>雙方直接對調受阻：偵測到科任課堂衝突</span>
+          <span>雙方直接對調受阻：偵測到科任授課衝突</span>
         </div>
         <div class="bg-white p-3 rounded-xl border border-amber-200 text-xs sm:text-sm space-y-1">
           ${clashA.map(msg => `<p class="text-rose-700 font-bold flex items-center gap-1.5"><i class="ph ph-x-circle text-base text-rose-500"></i> ${msg}</p>`).join('')}
@@ -1094,8 +1134,8 @@
         if (c.id === destLesson.id) return;
 
         if (checkVenueCapacityConflict(destLesson.day, destLesson.period, srcLesson.subject, [destLesson.id], srcLesson.className).conflict) return;
-        if (checkVenueCapacityConflict(c.day, c.period, destLesson.subject, [c.id], destLesson.className).conflict) return;
-        if (checkVenueCapacityConflict(srcLesson.day, srcLesson.period, c.subject, [srcLesson.id], c.className).conflict) return;
+        if (checkVenueCapacityConflict(c.day, c.period, destLesson.subject, [c.id], srcLesson.className).conflict) return;
+        if (checkVenueCapacityConflict(srcLesson.day, srcLesson.period, c.subject, [srcLesson.id], srcLesson.className).conflict) return;
 
         const step1 = canAllCoTeachersTeach(srcLesson, destLesson.day, destLesson.period, [destLesson.id]);
         const step2 = canAllCoTeachersTeach(destLesson, c.day, c.period, [c.id]);
@@ -1116,8 +1156,8 @@
         if (c.id === destLesson.id) return;
 
         if (checkVenueCapacityConflict(c.day, c.period, srcLesson.subject, [c.id], srcLesson.className).conflict) return;
-        if (checkVenueCapacityConflict(destLesson.day, destLesson.period, c.subject, [destLesson.id], c.className).conflict) return;
-        if (checkVenueCapacityConflict(srcLesson.day, srcLesson.period, destLesson.subject, [srcLesson.id], destLesson.className).conflict) return;
+        if (checkVenueCapacityConflict(destLesson.day, destLesson.period, c.subject, [destLesson.id], srcLesson.className).conflict) return;
+        if (checkVenueCapacityConflict(srcLesson.day, srcLesson.period, destLesson.subject, [srcLesson.id], srcLesson.className).conflict) return;
 
         const step1 = canAllCoTeachersTeach(srcLesson, c.day, c.period, [c.id]);
         const step2 = canAllCoTeachersTeach(c, destLesson.day, destLesson.period, [destLesson.id]);
@@ -1146,9 +1186,9 @@
             if (d.id === destLesson.id || d.id === c.id) continue;
 
             if (checkVenueCapacityConflict(destLesson.day, destLesson.period, srcLesson.subject, [destLesson.id], srcLesson.className).conflict) continue;
-            if (checkVenueCapacityConflict(c.day, c.period, destLesson.subject, [c.id], destLesson.className).conflict) continue;
-            if (checkVenueCapacityConflict(d.day, d.period, c.subject, [d.id], c.className).conflict) continue;
-            if (checkVenueCapacityConflict(srcLesson.day, srcLesson.period, d.subject, [srcLesson.id], d.className).conflict) continue;
+            if (checkVenueCapacityConflict(c.day, c.period, destLesson.subject, [c.id], srcLesson.className).conflict) continue;
+            if (checkVenueCapacityConflict(d.day, d.period, c.subject, [d.id], srcLesson.className).conflict) continue;
+            if (checkVenueCapacityConflict(srcLesson.day, srcLesson.period, d.subject, [srcLesson.id], srcLesson.className).conflict) continue;
 
             if (canAllCoTeachersTeach(srcLesson, destLesson.day, destLesson.period, [destLesson.id]) &&
                 canAllCoTeachersTeach(destLesson, c.day, c.period, [c.id]) &&
@@ -1158,7 +1198,7 @@
                 type: '4way',
                 typeName: '四方環狀互調 (4-Way Cycle)',
                 chain: [srcLesson, destLesson, c, d],
-                description: `四方連鎖輪替：${srcLesson.teachers.join('&')} ➔ ${destLesson.teachers.join('&')} ➔ ${c.teachers.join('&')} ➔ ${d.teachers.join('&')} 順延補位消解衝突`
+                description: `四方連鎖輪替：${srcLesson.teachers.join('&')} ➔ ${destLesson.teachers.join('&')} ➔ ${c.teachers.join('&')} ➔ ${d.teachers.join('&')} 順延補位消解撞堂`
               });
               if (candidates.length >= 4) break;
             }
@@ -1170,9 +1210,13 @@
       activeClashCycles = candidates;
       return candidates;
     }
+
     function executeSwapBetweenLessons(srcId, destId) {
       const srcLesson = currentTimetable.find(r => r.id === srcId);
       const destLesson = currentTimetable.find(r => r.id === destId);
+      const srcDate = document.getElementById('quick-src-date').value;
+      const destDate = document.getElementById('quick-dest-date').value;
+
       if (!srcLesson || !destLesson) return;
 
       const recordId = 'SWP_' + Date.now();
@@ -1197,13 +1241,13 @@
         date: new Date().toLocaleDateString('zh-HK'),
         type: '科任課堂對調',
         className: srcLesson.className,
-        teacherA: srcLesson.teachers.join(' & '),
-        teacherB: destLesson.teachers.join(' & '),
+        teacherA: srcLesson.teachers ? srcLesson.teachers.join(' & ') : srcLesson.teacher,
+        teacherB: destLesson.teachers ? destLesson.teachers.join(' & ') : destLesson.teacher,
         subjectA: srcLesson.subject,
         subjectB: destLesson.subject,
-        origSlot: `${origSrcDay} ${getSlotCleanTitle(origSrcPeriod)}`,
-        targetSlot: `${origDestDay} ${getSlotCleanTitle(origDestPeriod)}`,
-        note: `調課通過審核。`,
+        origSlot: `${srcDate} (${origSrcDay}) ${getSlotCleanTitle(origSrcPeriod)}`,
+        targetSlot: `${destDate} (${origDestDay}) ${getSlotCleanTitle(origDestPeriod)}`,
+        note: `同班科任調換上課次序。二人同課（P班雙師）已整組同步調動，場地限制（體育≤2班、電腦≤1班、視藝≤1班）審核通過。`,
         lessonIds: [srcLesson.id, destLesson.id],
         origSlots: [
           { id: srcLesson.id, day: origSrcDay, period: origSrcPeriod },
@@ -1239,14 +1283,14 @@
         className: cand.chain[0].className,
         isCycleSwap: true,
         movements: cand.chain.map((l, i) => ({
-          teacher: l.teachers.join(' & '),
+          teacher: l.teachers ? l.teachers.join(' & ') : l.teacher,
           subject: l.subject,
           fromDay: origSlots[i].day,
           fromPeriod: origSlots[i].period,
           toDay: origSlots[(i + 1) % n].day,
           toPeriod: origSlots[(i + 1) % n].period
         })),
-        note: `系統即時啟動【${cand.typeName}】機制，成功排除衝突。`,
+        note: `系統即時啟動【${cand.typeName}】機制，成功消解科任撞堂問題，P班雙師已整組同步調動，並符合場地容量限制。`,
         lessonIds: cand.chain.map(l => l.id),
         origSlots: origSlots
       };
@@ -1262,7 +1306,7 @@
       const applicantTeacher = document.getElementById('quick-teacher-select').value;
 
       if (!srcId || !coverTeacher) {
-        showGlobalMsg('請先選定需代課之課節及可代課教師！', 'error');
+        showGlobalMsg('請先選定調出課節及可代課教師！', 'error');
         return;
       }
 
@@ -1271,7 +1315,7 @@
 
       // Check special locked slots
       if (srcLesson.isLocked || isLockedSlot(srcDate, srcLesson.period, srcLesson.className)) {
-        showGlobalMsg('此課節已鎖定，禁止代課或調動！', 'error');
+        showGlobalMsg('此課節已鎖定特殊活動，禁止代課或調動！', 'error');
         return;
       }
 
@@ -1285,7 +1329,7 @@
       if (srcLesson.isCoTeaching && origTeachersArray.length > 1) {
         newTeachers = origTeachersArray.map(t => (t === targetTeacher ? coverTeacher : t));
         const remainingTeachers = origTeachersArray.filter(t => t !== targetTeacher);
-        noteText = `${srcLesson.className}班 ${srcLesson.subject}  ${targetTeacher} 老師因事未能上課，由 ${coverTeacher} 老師協助代課（與 ${remainingTeachers.join(' & ')} 老師合班授課）。`;
+        noteText = `${srcLesson.className}班 ${srcLesson.subject} 原任課 ${targetTeacher} 老師因事未能上課，由 ${coverTeacher} 老師協助代課（與 ${remainingTeachers.join(' & ')} 老師共同授課）。`;
       } else {
         newTeachers = [coverTeacher];
         noteText = `${srcLesson.className}班 ${srcLesson.subject} 原任課 ${targetTeacher} 老師因事未能上課，由 ${coverTeacher} 老師協助代課。`;
@@ -1306,7 +1350,7 @@
         teacherB: coverTeacher,
         subjectA: srcLesson.subject,
         origSlot: `${srcDate} (${srcLesson.day}) ${getSlotCleanTitle(srcLesson.period)}`,
-        targetSlot: '原時段編排代課',
+        targetSlot: '原時段代課授課',
         note: noteText,
         lessonIds: [srcLesson.id],
         isCoverRecord: true,
@@ -1321,9 +1365,10 @@
       renderTimetableGrid();
       renderSwapHistory();
       handleSrcSlotChange();
-      showGlobalMsg('調動安排已完成！', 'success');
+      showGlobalMsg('調課安排已完成並立案！', 'success');
       openSlipModal(record.id);
     }
+
     function computeIdealCycleRecommendations() {
       const srcId = document.getElementById('quick-src-slot').value;
       const container = document.getElementById('ideal-recommendations-list');
@@ -1332,7 +1377,7 @@
       if (!srcId) {
         container.innerHTML = `
           <div class="p-6 text-center text-slate-400 text-xs sm:text-sm font-bold bg-white rounded-2xl border border-slate-200">
-            請在左側選定調出課堂，系統立即演算最佳方案
+            請在左側選定調出課堂，系統即刻演算最佳方案
           </div>
         `;
         return;
@@ -1375,8 +1420,8 @@
         sameClassLessons.forEach(c => {
           if (b.id === c.id) return;
           if (checkVenueCapacityConflict(b.day, b.period, srcLesson.subject, [b.id], srcLesson.className).conflict) return;
-          if (checkVenueCapacityConflict(c.day, c.period, b.subject, [c.id], b.className).conflict) return;
-          if (checkVenueCapacityConflict(srcLesson.day, srcLesson.period, c.subject, [srcLesson.id], c.className).conflict) return;
+          if (checkVenueCapacityConflict(c.day, c.period, b.subject, [c.id], srcLesson.className).conflict) return;
+          if (checkVenueCapacityConflict(srcLesson.day, srcLesson.period, c.subject, [srcLesson.id], srcLesson.className).conflict) return;
 
           if (canAllCoTeachersTeach(srcLesson, b.day, b.period, [b.id]) &&
               canAllCoTeachersTeach(b, c.day, c.period, [c.id]) &&
@@ -1419,7 +1464,7 @@
       if (filtered.length === 0) {
         container.innerHTML = `
           <div class="p-6 text-center text-slate-400 text-xs sm:text-sm font-bold bg-white rounded-2xl border border-slate-200">
-            該篩選條件下無符合之互調方案
+            該篩選條件下無符合之調動安排
           </div>
         `;
         return;
@@ -1461,6 +1506,7 @@
         executeResolvedCycle(0);
       }
     }
+
     function openSlipModal(recordId) {
       const rec = swapHistory.find(r => r.id === recordId);
       if (!rec) return;
@@ -1471,11 +1517,11 @@
       if (rec.isCoverRecord) {
         detailsHtml = `
           <div class="border border-slate-300 rounded-2xl p-5 bg-slate-50 space-y-3">
-            <div class="grid grid-cols-2 gap-4 text-sm sm:text-base">
+            <div class="grid grid-cols-2 gap-4 text-xs sm:text-sm">
               <div><strong class="text-slate-500">原科任教師：</strong> <span class="font-black text-slate-900">${rec.teacherA}</span></div>
               <div><strong class="text-slate-500">代課教師：</strong> <span class="font-black text-indigo-700">${rec.teacherB}</span></div>
             </div>
-            <div class="grid grid-cols-2 gap-4 text-sm sm:text-base pt-2.5 border-t border-slate-200">
+            <div class="grid grid-cols-2 gap-4 text-xs sm:text-sm pt-2.5 border-t border-slate-200">
               <div><strong class="text-slate-500">課節時段：</strong> <span class="font-bold text-slate-800">${rec.origSlot}</span></div>
               <div><strong class="text-slate-500">班別及科目：</strong> <span class="font-bold text-slate-800">${rec.className} 班 ${rec.subjectA}</span></div>
             </div>
@@ -1484,7 +1530,7 @@
       } else if (rec.isCycleSwap && rec.movements) {
         detailsHtml = `
           <div class="border border-slate-300 rounded-2xl overflow-hidden shadow-2xs">
-            <table class="w-full text-sm sm:text-base text-left border-collapse">
+            <table class="w-full text-xs sm:text-sm text-left border-collapse">
               <thead class="bg-slate-100 font-black border-b border-slate-300 text-slate-800">
                 <tr>
                   <th class="p-3 border-r border-slate-300">相關教師</th>
@@ -1509,7 +1555,7 @@
       } else {
         detailsHtml = `
           <div class="border border-slate-300 rounded-2xl overflow-hidden shadow-2xs">
-            <table class="w-full text-sm sm:text-base text-left border-collapse">
+            <table class="w-full text-xs sm:text-sm text-left border-collapse">
               <thead class="bg-slate-100 font-black border-b border-slate-300 text-slate-800">
                 <tr>
                   <th class="p-3.5 border-r border-slate-300">調動雙方</th>
@@ -1538,19 +1584,19 @@
       }
 
       printArea.innerHTML = `
-        <div class="max-w-3xl mx-auto space-y-7 text-slate-900">
+        <div class="max-w-2xl mx-auto space-y-6 text-slate-900">
           <!-- Official School Header -->
-          <div class="text-center border-b-2 border-slate-950 pb-5 space-y-2">
+          <div class="text-center border-b-2 border-slate-950 pb-4 space-y-1.5">
             <h2 class="text-2xl sm:text-3xl font-black tracking-tight text-slate-950">2026/27年度滬江小學調課安排</h2>
-            <div class="flex items-center justify-center gap-8 text-sm sm:text-base font-black text-slate-700">
-              <span>文件類別：${rec.isCoverRecord ? '調課與代課通知表格' : '調課與代課確認'}</span>
+            <div class="flex items-center justify-center gap-6 text-xs sm:text-sm font-black text-slate-700">
+              <span>文件類別：${rec.isCoverRecord ? '代課通知表格' : '調課確認'}</span>
               <span>單號：${rec.id}</span>
               <span>日期：${rec.date}</span>
             </div>
           </div>
 
           <!-- Slip Main Body -->
-          <div class="space-y-5 text-sm sm:text-base">
+          <div class="space-y-4 text-xs sm:text-sm">
             <div class="leading-relaxed font-semibold">
               <strong>調課/代課提示：</strong>
                ${rec.className} 班之相關課節已進行調課安排，請相關科任依下列時間表授課。
@@ -1558,26 +1604,26 @@
 
             ${detailsHtml}
 
-            <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 text-sm sm:text-base text-slate-700 space-y-1.5 font-medium">
+            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs sm:text-sm text-slate-700 space-y-1 font-medium">
               <p><strong>備註說明：</strong> ${rec.note}</p>
               <p class="text-slate-500 font-bold">※ 請班主任早上提醒學生有關調課安排。</p>
             </div>
           </div>
 
           <!-- Official Required Signatures: 相關教師 & 校長簽署 -->
-          <div class="pt-8 grid grid-cols-2 gap-8 text-sm sm:text-base">
-            <div class="space-y-10">
-              <p class="font-black text-slate-900 text-base sm:text-lg">相關教師：</p>
+          <div class="pt-8 grid grid-cols-2 gap-8 text-xs sm:text-sm">
+            <div class="space-y-9">
+              <p class="font-black text-slate-900 text-base">相關教師：</p>
               <div class="border-b-2 border-slate-400 w-4/5"></div>
-              <p class="text-sm sm:text-base text-slate-600 font-black">
+              <p class="text-xs sm:text-sm text-slate-600 font-black">
                 ${rec.isCoverRecord ? `原科任：${rec.teacherA} / 調動科任：${rec.teacherB}` : (rec.isCycleSwap ? '全體相關科任' : `${rec.teacherA} 老師 / ${rec.teacherB} 老師`)}
               </p>
             </div>
 
-            <div class="space-y-10">
-              <p class="font-black text-slate-900 text-base sm:text-lg">校長簽署：</p>
+            <div class="space-y-9">
+              <p class="font-black text-slate-900 text-base">校長簽署：</p>
               <div class="border-b-2 border-slate-400 w-4/5"></div>
-              <p class="text-sm sm:text-base text-slate-600 font-black">日期：2026 年 &nbsp;&nbsp;&nbsp;&nbsp; 月 &nbsp;&nbsp;&nbsp;&nbsp; 日</p>
+              <p class="text-xs sm:text-sm text-slate-600 font-black">日期：2026 年 &nbsp;&nbsp;&nbsp;&nbsp; 月 &nbsp;&nbsp;&nbsp;&nbsp; 日</p>
             </div>
           </div>
         </div>
@@ -1603,6 +1649,7 @@
       document.body.removeChild(ta);
       showGlobalMsg('已成功複製調課安排通知文字！', 'success');
     }
+
     function revertSingleSwap(recordId) {
       const recIndex = swapHistory.findIndex(r => r.id === recordId);
       if (recIndex === -1) return;
@@ -1611,7 +1658,7 @@
       if (rec.isCoverRecord) {
         const l = currentTimetable.find(r => r.id === rec.lessonIds[0]);
         if (l) {
-          l.teachers = rec.origTeachersArray;
+          l.teachers = [...rec.origTeachersArray];
           l.teacher = rec.origTeachersArray[0];
           l.isSubstituted = false;
           delete l.originalTeacher;
@@ -1681,7 +1728,7 @@
           <div class="flex items-center gap-2.5 shrink-0">
             <button onclick="openSlipModal('${rec.id}')" class="px-4 py-2 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-800 font-black text-xs sm:text-sm transition flex items-center gap-1.5 shadow-2xs">
               <i class="ph ph-printer text-base"></i>
-              <span>查看調課代課安排</span>
+              <span>查看通知表格</span>
             </button>
             <button onclick="revertSingleSwap('${rec.id}')" class="px-4 py-2 rounded-xl border border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-700 font-black text-xs sm:text-sm transition flex items-center gap-1.5 shadow-2xs active:scale-95">
               <i class="ph ph-arrow-counter-clockwise text-base"></i>
@@ -1716,14 +1763,14 @@
       const day = document.getElementById('lock-day').value;
       const period = document.getElementById('lock-period').value;
       const className = document.getElementById('lock-class').value;
-      const reason = document.getElementById('lock-reason').value || '校本課程';
+      const reason = document.getElementById('lock-reason').value || '校外導師/校本活動';
 
       lockedSlots.push({ date, day, period, className, reason });
       document.getElementById('lock-reason').value = '';
       updateLockedBadgeCount();
       renderLockedList();
       renderTimetableGrid();
-      showGlobalMsg('課堂已成功鎖定！', 'success');
+      showGlobalMsg('特別課堂已成功鎖定保護！', 'success');
     }
 
     function removeLock(index) {
@@ -1783,6 +1830,7 @@
         fileSec.classList.add('hidden');
       }
     }
+
     let parsedFileRows = null;
     function handleFileInputChange(e) {
       const file = e.target.files[0];
@@ -1929,6 +1977,7 @@
         }
       }
     }
+
     function renderTimetableGrid() {
       const tbody = document.getElementById('timetable-matrix-body');
       const selector = document.getElementById('grid-entity-selector');
@@ -1957,7 +2006,7 @@
           if (currentViewMode === 'class') {
             matchedLessons = currentTimetable.filter(r => r.day === day && r.period === slot.key && r.className === selectedEntity);
           } else {
-            matchedLessons = currentTimetable.filter(r => r.day === day && r.period === slot.key && r.teachers && r.teachers.includes(selectedEntity));
+            matchedLessons = currentTimetable.filter(r => r.day === day && r.period === slot.key && (r.teachers ? r.teachers.includes(selectedEntity) : r.teacher === selectedEntity));
           }
 
           if (matchedLessons.length === 0) {
@@ -1965,17 +2014,17 @@
           } else {
             td.innerHTML = matchedLessons.map(l => {
               let badges = '';
-              if (l.isDouble) badges += '<span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 text-xs font-black">雙教節</span> ';
-              if (l.isSwapped) badges += '<span class="px-1.5 py-0.5 rounded bg-rose-100 text-rose-900 text-xs font-black">已調</span> ';
+              if (l.isDouble) badges += '<span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 text-xs font-black">連堂</span> ';
+              if (l.isSwapped) badges += '<span class="px-1.5 py-0.5 rounded bg-rose-100 text-rose-900 text-xs font-black">已調動</span> ';
               if (l.isSubstituted) badges += '<span class="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-900 text-xs font-black">代課</span> ';
 
               // Co-teaching prominent display
               const coTeachersLabel = l.teachers && l.teachers.length > 1 
-                ? `<div class="text-xs sm:text-sm text-indigo-700 font-black flex items-center gap-1 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-200"><i class="ph ph-users text-sm"></i> P班: ${l.teachers.join(' & ')}</div>`
+                ? `<div class="text-xs sm:text-sm text-indigo-700 font-black flex items-center gap-1 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-200"><i class="ph ph-users text-sm"></i> P班兩位老師: ${l.teachers.join(' & ')}</div>`
                 : (currentViewMode === 'class' ? `<div class="text-xs text-slate-500 font-bold">${l.teacher}</div>` : '');
 
               return `
-                <div class="p-2 rounded-xl border text-xs sm:text-sm leading-snug ${l.isDuty ? 'bg-amber-50 border-amber-200' : 'bg-white border-slate-300 shadow-2xs'} space-y-1">
+                <div class="p-2.5 rounded-xl border text-xs sm:text-sm leading-snug ${l.isDuty ? 'bg-amber-50 border-amber-200' : 'bg-white border-slate-300 shadow-2xs'} space-y-1.5">
                   <div class="font-black text-slate-900 flex items-center justify-between">
                     <span>${currentViewMode === 'class' ? l.subject : `${l.className} - ${l.subject}`}</span>
                   </div>
@@ -2082,14 +2131,14 @@
 
       textSpan.innerText = text;
       if (type === 'success') {
-        box.className = 'px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 text-sm font-black border bg-emerald-600 text-white border-emerald-500';
-        icon.className = 'text-lg ph ph-check-circle';
+        box.className = 'px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 text-sm sm:text-base font-black border bg-emerald-600 text-white border-emerald-500';
+        icon.className = 'text-xl ph ph-check-circle';
       } else if (type === 'error') {
-        box.className = 'px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 text-sm font-black border bg-rose-600 text-white border-rose-500';
-        icon.className = 'text-lg ph ph-warning-circle';
+        box.className = 'px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 text-sm sm:text-base font-black border bg-rose-600 text-white border-rose-500';
+        icon.className = 'text-xl ph ph-warning-circle';
       } else {
-        box.className = 'px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 text-sm font-black border bg-slate-850 text-white border-slate-700';
-        icon.className = 'text-lg ph ph-info';
+        box.className = 'px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 text-sm sm:text-base font-black border bg-slate-850 text-white border-slate-700';
+        icon.className = 'text-xl ph ph-info';
       }
 
       toast.classList.remove('translate-y-[-100%]', 'opacity-0', 'pointer-events-none');
@@ -2100,8 +2149,9 @@
         toast.classList.add('translate-y-[-100%]', 'opacity-0', 'pointer-events-none');
       }, 3200);
     }
+
     function loadDefaultSampleTimetable() {
-      const sampleTeachers = ['陳秀芬', '黃志文', 'Mr. Roberts', '周詠詩', '李美華', '張海倫', '郭靜敏', '李偉民', '林卓盈', '王永安'];
+      const sampleTeachers = ['羅筱彤', '沈美玉', 'BW', '曾樂欣', '郭俊傑', '何曉欣', '鄭靜敏', '文美餘', '李錦嫻', '吳炳尤'];
       const sampleClasses = ['4A', '4B', '5A', '5B', '6A', '6B'];
       const sampleSubjects = ['中文', '英文', '數學', '常識', '音樂', '視藝', '體育', '電腦', '普通話', '導修'];
 
@@ -2167,10 +2217,10 @@
               let teachers = [teacher];
               let isCoTeaching = false;
 
-              // Setup co-teaching in English (Mr. Roberts + 周詠詩)
+              // Setup co-teaching in English (BW + 沈美玉)
               if (subject === '英文' && (cls === '4A' || cls === '4B')) {
-                teachers = ['Mr. Roberts', '周詠詩'];
-                teacher = 'Mr. Roberts';
+                teachers = ['BW', '沈美玉'];
+                teacher = 'BW';
                 isCoTeaching = true;
               }
 
@@ -2219,9 +2269,13 @@
     }
 
     window.onload = function() {
-      document.getElementById('quick-src-date').value = getDefaultDateString(0);
-      document.getElementById('quick-dest-date').value = getDefaultDateString(0);
-      document.getElementById('src-day-badge').innerText = '星期一';
+      // Default date: Monday, September 7, 2026
+      const defaultDate = '2026-09-07';
+      document.getElementById('quick-src-date').value = defaultDate;
+      document.getElementById('quick-dest-date').value = defaultDate;
+      
+      handleSrcDateChange();
+      handleDestDateChange();
 
       loadDefaultSampleTimetable();
       renderSwapHistory();
