@@ -72,11 +72,11 @@
         </div>
         <div class="truncate">
           <h1 class="text-base sm:text-xl font-black text-slate-900 tracking-tight flex items-center gap-2.5 flex-wrap">
-            <span>滬江小學 智能課堂調動與代課紙系統</span>
-            <span class="text-xs font-black px-2.5 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200">2026/27年度校本行政規範</span>
+            <span>滬江小學 智能調課與代課系統</span>
+            <span class="text-xs font-black px-2.5 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200">2026/27年度滬江小學</span>
           </h1>
           <p class="text-xs sm:text-sm font-semibold text-slate-500 truncate mt-0.5">
-            同班科任對調・單節彈性調移・雙師合教同步連動・體育≤2班・電腦≤1班・自動三方/四方環狀互調
+            提前通知
           </p>
         </div>
       </div>
@@ -93,14 +93,14 @@
         <!-- Irregular Lessons Lock Button -->
         <button onclick="openSpecialLockModal()" class="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 rounded-xl font-black text-xs sm:text-sm transition flex items-center gap-1.5 shadow-2xs active:scale-95">
           <i class="ph ph-lock-key text-base"></i>
-          <span>鎖定不定期課堂</span>
+          <span>鎖定不定期校外導師課堂</span>
           <span id="locked-count-badge" class="px-2 py-0.5 rounded-full bg-rose-200 text-rose-900 text-xs font-black">0</span>
         </button>
 
         <!-- Import Timetable Button -->
         <button onclick="openImportModal()" class="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-300 rounded-xl font-black text-xs sm:text-sm transition flex items-center gap-1.5 shadow-2xs active:scale-95">
           <i class="ph ph-file-arrow-up text-base"></i>
-          <span>匯入課表 (Excel/CSV)</span>
+          <span>匯入全校老師課表 (Excel/CSV)</span>
         </button>
       </div>
     </div>
@@ -122,10 +122,10 @@
         <div>
           <h2 class="text-base sm:text-xl font-black text-slate-900 flex items-center gap-2.5">
             <i class="ph ph-arrows-left-right text-indigo-600 text-2xl"></i>
-            <span>課堂調動與代課控制台</span>
+            <span>調課與代課控制台</span>
           </h2>
           <p class="text-xs sm:text-sm font-semibold text-slate-500 mt-1">
-            可選單節調動・同課雙師整組同步調動・直接對調受阻時立即自動搜尋三方/四方互調方案
+            按需要選擇調課方案
           </p>
         </div>
 
@@ -137,7 +137,7 @@
           </button>
           <button onclick="setConsoleMode('ideal')" id="mode-btn-ideal" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-black transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900">
             <i class="ph ph-sparkle text-amber-500 text-base"></i>
-            <span>2. 理想調動 (全域推薦)</span>
+            <span>2. 理想調動(自由調動)</span>
           </button>
           <button onclick="setConsoleMode('cover')" id="mode-btn-cover" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-black transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900">
             <i class="ph ph-user-switch text-emerald-600 text-base"></i>
@@ -222,7 +222,7 @@
               <div class="pt-2 flex items-center justify-end gap-3">
                 <button onclick="diagnoseAndExecuteSwap()" class="w-full sm:w-auto px-6 py-3 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-black rounded-xl text-xs sm:text-sm shadow-md shadow-indigo-200 transition flex items-center justify-center gap-2">
                   <i class="ph ph-magic-wand text-lg"></i>
-                  <span>一鍵診斷調動 (直調受阻自動啟動三方/四方)</span>
+                  <span>一鍵診斷調動 </span>
                 </button>
               </div>
             </div>
@@ -233,13 +233,13 @@
             </div>
           </div>
 
-          <!-- Mode 2: Ideal Swap Recommendations (理想調動智能推薦清單) -->
+          <!-- Mode 2: Ideal Swap Recommendations (智能推薦清單) -->
           <div id="panel-ideal-swap" class="hidden space-y-4">
             <div class="p-4 rounded-2xl bg-indigo-50 border border-indigo-200 text-indigo-950 text-xs sm:text-sm space-y-1.5">
               <div class="font-black flex items-center justify-between">
                 <div class="flex items-center gap-2">
                   <i class="ph ph-sparkle text-amber-500 text-lg"></i>
-                  <span>2. 理想調動演算法 (智能全域搜尋推薦)：</span>
+                  <span>2. 智能演算法 (智能全域搜尋推薦)：</span>
                 </div>
                 <div class="flex items-center gap-1.5 text-xs text-indigo-700 bg-white px-2.5 py-1 rounded-lg border border-indigo-200 font-black">
                   <i class="ph ph-shield-check text-emerald-600 text-sm"></i>
@@ -247,7 +247,7 @@
                 </div>
               </div>
               <p class="text-xs sm:text-sm text-indigo-900 leading-relaxed font-semibold">
-                系統自動於全班課堂範圍搜尋合規路徑（包含雙方直調、三方互調與四方互調），依「同日優先」、「無撞堂」綜合排序。
+                系統自動於全班課堂範圍搜尋合適安排，依「同日優先」、「無衝突」綜合排序。
               </p>
             </div>
 
@@ -263,7 +263,7 @@
             <!-- List of ideal options -->
             <div id="ideal-recommendations-list" class="space-y-3 max-h-[380px] overflow-y-auto pr-1">
               <div class="p-6 text-center text-slate-400 text-xs sm:text-sm font-bold bg-white rounded-2xl border border-slate-200">
-                請在左側選定調出日期與課節，系統即刻演算全域最佳理想方案
+                請在左側選定調出日期與課節，系統即時演算最佳方案
               </div>
             </div>
           </div>
@@ -273,10 +273,10 @@
             <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 text-xs sm:text-sm space-y-1.5">
               <div class="font-black flex items-center gap-2 text-amber-900 text-sm sm:text-base">
                 <i class="ph ph-user-check text-amber-600 text-xl"></i>
-                <span>導修／班主任節／當值專屬代課通道</span>
+                <span>導修／班主任節／當值代課通道</span>
               </div>
               <p class="text-xs sm:text-sm text-amber-800 leading-relaxed font-semibold">
-                看管性質節數（第 10 節導修、班主任節或當值），系統自動篩選該節全校「完全沒有授課、沒有當值」之空堂同事代任，免動同班課節次序。
+                導修、班主任節或當值，系統自動篩選該節吉節之同事。
               </p>
             </div>
 
@@ -298,7 +298,7 @@
         </div>
       </div>
     </div>
-    <!-- Section 2: Interactive Timetable Display & Filter (全校課表檢視盤) -->
+    <!-- Section 2: Interactive Timetable Display & Filter (全校課表檢視) -->
     <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-5">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
         <div class="flex items-center gap-3">
@@ -306,9 +306,9 @@
             <i class="ph ph-table text-xl"></i>
           </div>
           <div>
-            <h3 class="text-base sm:text-lg font-black text-slate-900">全校課表檢視盤 (每天18節完整流向)</h3>
+            <h3 class="text-base sm:text-lg font-black text-slate-900">全校課表檢視 (每天完整流向)</h3>
             <p class="text-xs sm:text-sm font-semibold text-slate-500">
-              抹除前綴編號干擾・清晰醒目顯示雙師合教（兩位教師姓名）・雙教節提醒・已調與代課標籤
+              顯示P班兩位科任・雙教節提醒・已調與代課標籤
             </p>
           </div>
         </div>
@@ -347,7 +347,7 @@
       </div>
     </div>
 
-    <!-- Section 3: Swap & Cover Audit Log (調課與代課存根紀錄簿) -->
+    <!-- Section 3: Swap & Cover Audit Log (調課與代課紀錄) -->
     <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-5">
       <div class="flex items-center justify-between border-b border-slate-100 pb-4">
         <div class="flex items-center gap-3">
@@ -355,8 +355,8 @@
             <i class="ph ph-receipt text-xl"></i>
           </div>
           <div>
-            <h3 class="text-base sm:text-lg font-black text-slate-900">調課與代課立案紀錄簿</h3>
-            <p class="text-xs sm:text-sm font-semibold text-slate-500">每筆紀錄具備獨立校本公文編號，隨時支援紅色【退回】精確還原</p>
+            <h3 class="text-base sm:text-lg font-black text-slate-900">調課與代課紀錄</h3>
+            <p class="text-xs sm:text-sm font-semibold text-slate-500">每筆紀錄具備獨立編號，隨時精確還原</p>
           </div>
         </div>
 
@@ -377,13 +377,13 @@
     </div>
 
   </main>
-  <!-- MODAL 1: Official Shanghai Alumni Primary School Swap Slip (滬江小學調課安排通知單) -->
+  <!-- MODAL 1: Official Shanghai Alumni Primary School Swap Slip (滬江小學調課安排通知表格) -->
   <div id="slip-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4">
     <div class="bg-white rounded-3xl shadow-2xl max-w-3xl w-full max-h-[92vh] flex flex-col overflow-hidden border border-slate-200 animate-in fade-in zoom-in duration-150">
       <div class="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
         <div class="flex items-center gap-2.5 text-indigo-950 font-black text-sm sm:text-base">
           <i class="ph ph-printer text-xl text-indigo-600"></i>
-          <span>滬江小學 校本調課／代課通知單</span>
+          <span>2026/27年度 滬江小學 校本調課／代課通知表格</span>
         </div>
         <button onclick="closeSlipModal()" class="w-9 h-9 rounded-xl hover:bg-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-800 transition">
           <i class="ph ph-x text-lg"></i>
@@ -404,14 +404,14 @@
         <div class="flex items-center gap-3">
           <button onclick="window.print()" class="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs sm:text-sm shadow-md shadow-indigo-200 transition flex items-center gap-2 active:scale-95">
             <i class="ph ph-printer text-base"></i>
-            <span>列印調課安排單 (Print)</span>
+            <span>列印調課安排表格 (Print)</span>
           </button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- MODAL 2: Irregular / Special Activity Lock Registration (鎖定不定期特殊課堂) -->
+  <!-- MODAL 2: Irregular / Special Activity Lock Registration (鎖定不定期校外導師課堂) -->
   <div id="lock-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4">
     <div class="bg-white rounded-3xl shadow-2xl max-w-xl w-full p-6 space-y-4 border border-slate-200">
       <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -425,7 +425,7 @@
       </div>
 
       <p class="text-xs sm:text-sm text-slate-500 leading-relaxed font-semibold">
-        可指定特定教學日期（例如特定週會、外展講座、STEAM全方位活動日），防止課堂被任意調走。
+        可指定特定教學日期（例如校外導師、校本課程），防止課堂被任意調走。
       </p>
 
       <div class="space-y-3.5 text-xs sm:text-sm">
@@ -467,7 +467,7 @@
             </select>
           </div>
           <div>
-            <label class="block font-bold text-slate-700 mb-1">特殊活動名稱：</label>
+            <label class="block font-bold text-slate-700 mb-1">活動名稱：</label>
             <input type="text" id="lock-reason" placeholder="例如：外聘講座 / STEAM週會" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 font-bold">
           </div>
         </div>
@@ -510,7 +510,7 @@
       <!-- Tab 1: File Upload -->
       <div id="import-file-section" class="space-y-3 text-xs sm:text-sm">
         <p class="text-slate-500 leading-relaxed font-semibold">
-          支援《2627_科任上課紙表.xlsx》（第一列為教師名單、第二列起為課節），或標準 CSV 排課試算表。
+          支援《2627_全體科任上課當值總表.xlsx》（第一列為教師名單、第二列起為課節），或標準 CSV 排課試算表。
         </p>
         <div class="border-2 border-dashed border-slate-300 rounded-2xl p-6 text-center hover:border-indigo-400 transition bg-slate-50 cursor-pointer" onclick="document.getElementById('timetable-file-input').click()">
           <i class="ph ph-cloud-arrow-up text-4xl text-indigo-500 mb-2"></i>
@@ -540,7 +540,7 @@
     </div>
   </div>
   <script>
-    /* 18 Daily Slots Structure (嚴格對齊全日18節編配，抹除前綴編號) */
+    /* 18 Daily Slots Structure (嚴格對齊全日課節) */
     const DAILY_18_SLOTS = [
       { key: 'S01', title: '早上當值', time: '07:30 - 08:15', isDuty: true },
       { key: 'S02', title: '早上當值', time: '07:45 - 08:15', isDuty: true },
