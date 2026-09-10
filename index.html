@@ -1245,7 +1245,7 @@
         subjectB: destLesson.subject,
         origSlot: `${srcDate} (${origSrcDay}) ${getSlotCleanTitle(origSrcPeriod)}`,
         targetSlot: `${destDate} (${origDestDay}) ${getSlotCleanTitle(origDestPeriod)}`,
-        note: `同班科任調換上課次序。${isSameDay ? '【🌟 同日對調・學生免換課本與作業】' : ''}P班兩位老師已整組同步調動，場地限制通過。`,
+        note: `調課。${isSameDay ? '🌟' : ''}`,
         lessonIds: [srcLesson.id, destLesson.id],
         origSlots: [
           { id: srcLesson.id, day: origSrcDay, period: origSrcPeriod },
