@@ -577,32 +577,7 @@
     let currentViewMode = 'class'; // 'class' or 'teacher'
     let currentIdealFilter = 'all'; // 'all', '2way', '3way', '4way'
     let cachedIdealCandidates = [];
-    let activeClashCycles = [];
-
-    /* Clean Slot Title (抹除干擾視覺的編號數字) */
-    function getSlotCleanTitle(periodKey) {
-      const s = DAILY_18_SLOTS.find(x => x.key === periodKey);
-      return s ? `${s.title} (${s.time})` : periodKey;
-    }
-
-    /* Convert calendar date YYYY-MM-DD to Hong Kong Weekday */
-    function getWeekdayFromDate(dateStr) {
-      if (!dateStr) return '星期一';
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return '星期一';
-      const days = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
-      const hkDay = days[d.getDay()];
-      return DAYS_ORDER.includes(hkDay) ? hkDay : '星期一';
-    }
-
-    // Get default date (Defaults to 2026-09-07 Monday)
-    function getDefaultDateString(dayOffset = 0) {
-      const base = new Date('2026-09-07T00:00:00');
-      base.setDate(base.getDate() + dayOffset);
-      return base.toISOString().split('T')[0];
-    }
-
-    /* Venue Capacity Rules: PE <= 2 classes, Computer <= 1 class */
+    /* Venue Capacity Rules: PE <= 2 classes, Computer <= 1 class, Senior VA (P4-P6) <= 1 class */
     function isPESubject(sub) {
       return /體育|PE|P\.E\./i.test(sub || '');
     }
@@ -611,7 +586,15 @@
       return /電腦|ICT|資訊科技|電腦科|IT/i.test(sub || '');
     }
 
-    function checkVenueCapacityConflict(targetDay, targetPeriod, targetSubject, movingOutLessonIds = []) {
+    function isVASubject(sub) {
+      return /視藝|視覺藝術|VA|Art/i.test(sub || '');
+    }
+
+    function isSeniorClass(className) {
+      return /^[456]|[4-6][A-Z]|P[4-6]|小[四五六]/i.test(className || '');
+    }
+
+    function checkVenueCapacityConflict(targetDay, targetPeriod, targetSubject, movingOutLessonIds = [], targetClassName = '') {
       if (isPESubject(targetSubject)) {
         const currentPECount = currentTimetable.filter(r => 
           r.day === targetDay && 
@@ -638,6 +621,23 @@
           return {
             conflict: true,
             reason: `【電腦室超出上限】在 ${targetDay} ${getSlotCleanTitle(targetPeriod)}，全校已有 ${currentCompCount} 班使用電腦室，超過每節最多 1 班之上限！`
+          };
+        }
+      }
+
+      // Senior Visual Arts Constraint: P4, P5, P6 <= 1 class per period
+      if (isVASubject(targetSubject) && isSeniorClass(targetClassName)) {
+        const currentVACount = currentTimetable.filter(r => 
+          r.day === targetDay && 
+          r.period === targetPeriod && 
+          isVASubject(r.subject) && 
+          isSeniorClass(r.className) && 
+          !movingOutLessonIds.includes(r.id)
+        ).length;
+        if (currentVACount + 1 > 1) {
+          return {
+            conflict: true,
+            reason: `【視藝室超出上限】在 ${targetDay} ${getSlotCleanTitle(targetPeriod)}，高小(小四至小六)已有 ${currentVACount} 班上視藝課，超過每節最多 1 班之上限！`
           };
         }
       }
@@ -931,7 +931,7 @@
       }
 
       // Venue capacity check
-      const peCompA = checkVenueCapacityConflict(destLesson.day, destLesson.period, srcLesson.subject, [destLesson.id]);
+      const peCompA = checkVenueCapacityConflict(destLesson.day, destLesson.period, srcLesson.subject, [destLesson.id], srcLesson.className);
       if (peCompA.conflict) {
         resultBox.className = 'rounded-2xl p-5 text-xs sm:text-sm border bg-rose-50 border-rose-300 text-rose-950 space-y-2';
         resultBox.innerHTML = `
@@ -947,7 +947,7 @@
         return;
       }
 
-      const peCompB = checkVenueCapacityConflict(srcLesson.day, srcLesson.period, destLesson.subject, [srcLesson.id]);
+      const peCompB = checkVenueCapacityConflict(srcLesson.day, srcLesson.period, destLesson.subject, [srcLesson.id], destLesson.className);
       if (peCompB.conflict) {
         resultBox.className = 'rounded-2xl p-5 text-xs sm:text-sm border bg-rose-50 border-rose-300 text-rose-950 space-y-2';
         resultBox.innerHTML = `
@@ -1093,9 +1093,9 @@
       sameClassLessons.forEach(c => {
         if (c.id === destLesson.id) return;
 
-        if (checkVenueCapacityConflict(destLesson.day, destLesson.period, srcLesson.subject, [destLesson.id]).conflict) return;
-        if (checkVenueCapacityConflict(c.day, c.period, destLesson.subject, [c.id]).conflict) return;
-        if (checkVenueCapacityConflict(srcLesson.day, srcLesson.period, c.subject, [srcLesson.id]).conflict) return;
+        if (checkVenueCapacityConflict(destLesson.day, destLesson.period, srcLesson.subject, [destLesson.id], srcLesson.className).conflict) return;
+        if (checkVenueCapacityConflict(c.day, c.period, destLesson.subject, [c.id], destLesson.className).conflict) return;
+        if (checkVenueCapacityConflict(srcLesson.day, srcLesson.period, c.subject, [srcLesson.id], c.className).conflict) return;
 
         const step1 = canAllCoTeachersTeach(srcLesson, destLesson.day, destLesson.period, [destLesson.id]);
         const step2 = canAllCoTeachersTeach(destLesson, c.day, c.period, [c.id]);
@@ -1115,9 +1115,9 @@
       sameClassLessons.forEach(c => {
         if (c.id === destLesson.id) return;
 
-        if (checkVenueCapacityConflict(c.day, c.period, srcLesson.subject, [c.id]).conflict) return;
-        if (checkVenueCapacityConflict(destLesson.day, destLesson.period, c.subject, [destLesson.id]).conflict) return;
-        if (checkVenueCapacityConflict(srcLesson.day, srcLesson.period, destLesson.subject, [srcLesson.id]).conflict) return;
+        if (checkVenueCapacityConflict(c.day, c.period, srcLesson.subject, [c.id], srcLesson.className).conflict) return;
+        if (checkVenueCapacityConflict(destLesson.day, destLesson.period, c.subject, [destLesson.id], c.className).conflict) return;
+        if (checkVenueCapacityConflict(srcLesson.day, srcLesson.period, destLesson.subject, [srcLesson.id], destLesson.className).conflict) return;
 
         const step1 = canAllCoTeachersTeach(srcLesson, c.day, c.period, [c.id]);
         const step2 = canAllCoTeachersTeach(c, destLesson.day, destLesson.period, [destLesson.id]);
@@ -1145,10 +1145,10 @@
             const d = sameClassLessons[j];
             if (d.id === destLesson.id || d.id === c.id) continue;
 
-            if (checkVenueCapacityConflict(destLesson.day, destLesson.period, srcLesson.subject, [destLesson.id]).conflict) continue;
-            if (checkVenueCapacityConflict(c.day, c.period, destLesson.subject, [c.id]).conflict) continue;
-            if (checkVenueCapacityConflict(d.day, d.period, c.subject, [d.id]).conflict) continue;
-            if (checkVenueCapacityConflict(srcLesson.day, srcLesson.period, d.subject, [srcLesson.id]).conflict) continue;
+            if (checkVenueCapacityConflict(destLesson.day, destLesson.period, srcLesson.subject, [destLesson.id], srcLesson.className).conflict) continue;
+            if (checkVenueCapacityConflict(c.day, c.period, destLesson.subject, [c.id], destLesson.className).conflict) continue;
+            if (checkVenueCapacityConflict(d.day, d.period, c.subject, [d.id], c.className).conflict) continue;
+            if (checkVenueCapacityConflict(srcLesson.day, srcLesson.period, d.subject, [srcLesson.id], d.className).conflict) continue;
 
             if (canAllCoTeachersTeach(srcLesson, destLesson.day, destLesson.period, [destLesson.id]) &&
                 canAllCoTeachersTeach(destLesson, c.day, c.period, [c.id]) &&
@@ -1351,8 +1351,8 @@
 
       // 1. Direct 2-Way options
       sameClassLessons.forEach(dest => {
-        if (checkVenueCapacityConflict(dest.day, dest.period, srcLesson.subject, [dest.id]).conflict) return;
-        if (checkVenueCapacityConflict(srcLesson.day, srcLesson.period, dest.subject, [srcLesson.id]).conflict) return;
+        if (checkVenueCapacityConflict(dest.day, dest.period, srcLesson.subject, [dest.id], srcLesson.className).conflict) return;
+        if (checkVenueCapacityConflict(srcLesson.day, srcLesson.period, dest.subject, [srcLesson.id], dest.className).conflict) return;
 
         const canA = canAllCoTeachersTeach(srcLesson, dest.day, dest.period, [dest.id]);
         const canB = canAllCoTeachersTeach(dest, srcLesson.day, srcLesson.period, [srcLesson.id]);
@@ -1374,16 +1374,16 @@
       sameClassLessons.forEach(b => {
         sameClassLessons.forEach(c => {
           if (b.id === c.id) return;
-          if (checkVenueCapacityConflict(b.day, b.period, srcLesson.subject, [b.id]).conflict) return;
-          if (checkVenueCapacityConflict(c.day, c.period, b.subject, [c.id]).conflict) return;
-          if (checkVenueCapacityConflict(srcLesson.day, srcLesson.period, c.subject, [srcLesson.id]).conflict) return;
+          if (checkVenueCapacityConflict(b.day, b.period, srcLesson.subject, [b.id], srcLesson.className).conflict) return;
+          if (checkVenueCapacityConflict(c.day, c.period, b.subject, [c.id], b.className).conflict) return;
+          if (checkVenueCapacityConflict(srcLesson.day, srcLesson.period, c.subject, [srcLesson.id], c.className).conflict) return;
 
           if (canAllCoTeachersTeach(srcLesson, b.day, b.period, [b.id]) &&
               canAllCoTeachersTeach(b, c.day, c.period, [c.id]) &&
               canAllCoTeachersTeach(c, srcLesson.day, srcLesson.period, [srcLesson.id])) {
             recommendations.push({
               type: '3way',
-              typeName: '三方環狀互調 (3-Way)',
+              typeName: '三方互調 (3-Way)',
               chain: [srcLesson, b, c],
               score: 70,
               description: `三方輪替：${srcLesson.teachers.join('&')} ➔ ${b.teachers.join('&')} (${b.subject}) ➔ ${c.teachers.join('&')} (${c.subject}) 補回`,
@@ -1470,12 +1470,12 @@
 
       if (rec.isCoverRecord) {
         detailsHtml = `
-          <div class="border border-slate-300 rounded-2xl p-4 bg-slate-50 space-y-2">
-            <div class="grid grid-cols-2 gap-4 text-xs sm:text-sm">
-              <div><strong class="text-slate-500">原任課／當值教師：</strong> <span class="font-black text-slate-900">${rec.teacherA}</span></div>
-              <div><strong class="text-slate-500">代課／代值教師：</strong> <span class="font-black text-indigo-700">${rec.teacherB}</span></div>
+          <div class="border border-slate-300 rounded-2xl p-5 bg-slate-50 space-y-3">
+            <div class="grid grid-cols-2 gap-4 text-sm sm:text-base">
+              <div><strong class="text-slate-500">原科任教師：</strong> <span class="font-black text-slate-900">${rec.teacherA}</span></div>
+              <div><strong class="text-slate-500">代課教師：</strong> <span class="font-black text-indigo-700">${rec.teacherB}</span></div>
             </div>
-            <div class="grid grid-cols-2 gap-4 text-xs sm:text-sm pt-2 border-t border-slate-200">
+            <div class="grid grid-cols-2 gap-4 text-sm sm:text-base pt-2.5 border-t border-slate-200">
               <div><strong class="text-slate-500">課節時段：</strong> <span class="font-bold text-slate-800">${rec.origSlot}</span></div>
               <div><strong class="text-slate-500">班別及科目：</strong> <span class="font-bold text-slate-800">${rec.className} 班 ${rec.subjectA}</span></div>
             </div>
@@ -1484,22 +1484,22 @@
       } else if (rec.isCycleSwap && rec.movements) {
         detailsHtml = `
           <div class="border border-slate-300 rounded-2xl overflow-hidden shadow-2xs">
-            <table class="w-full text-xs sm:text-sm text-left border-collapse">
+            <table class="w-full text-sm sm:text-base text-left border-collapse">
               <thead class="bg-slate-100 font-black border-b border-slate-300 text-slate-800">
                 <tr>
-                  <th class="p-2.5 border-r border-slate-300">參與科任教師</th>
-                  <th class="p-2.5 border-r border-slate-300">班別／科目</th>
-                  <th class="p-2.5 border-r border-slate-300">原上課時段</th>
-                  <th class="p-2.5">調整後上課時段</th>
+                  <th class="p-3 border-r border-slate-300">相關教師</th>
+                  <th class="p-3 border-r border-slate-300">班別／科目</th>
+                  <th class="p-3 border-r border-slate-300">原上課時段</th>
+                  <th class="p-3">調整後上課時段</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-200 font-semibold">
                 ${rec.movements.map(m => `
                   <tr>
-                    <td class="p-2.5 border-r border-slate-200 font-black text-slate-900">${m.teacher}</td>
-                    <td class="p-2.5 border-r border-slate-200">${rec.className} ${m.subject}</td>
-                    <td class="p-2.5 border-r border-slate-200 text-slate-600">${m.fromDay} ${getSlotCleanTitle(m.fromPeriod)}</td>
-                    <td class="p-2.5 font-black text-indigo-700">${m.toDay} ${getSlotCleanTitle(m.toPeriod)}</td>
+                    <td class="p-3 border-r border-slate-200 font-black text-slate-900">${m.teacher}</td>
+                    <td class="p-3 border-r border-slate-200">${rec.className} ${m.subject}</td>
+                    <td class="p-3 border-r border-slate-200 text-slate-600">${m.fromDay} ${getSlotCleanTitle(m.fromPeriod)}</td>
+                    <td class="p-3 font-black text-indigo-700">${m.toDay} ${getSlotCleanTitle(m.toPeriod)}</td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -1509,27 +1509,27 @@
       } else {
         detailsHtml = `
           <div class="border border-slate-300 rounded-2xl overflow-hidden shadow-2xs">
-            <table class="w-full text-xs sm:text-sm text-left border-collapse">
+            <table class="w-full text-sm sm:text-base text-left border-collapse">
               <thead class="bg-slate-100 font-black border-b border-slate-300 text-slate-800">
                 <tr>
-                  <th class="p-3 border-r border-slate-300">調動雙方</th>
-                  <th class="p-3 border-r border-slate-300">任教班別與科目</th>
-                  <th class="p-3 border-r border-slate-300">原訂課節時段</th>
-                  <th class="p-3">調往新時段</th>
+                  <th class="p-3.5 border-r border-slate-300">調動雙方</th>
+                  <th class="p-3.5 border-r border-slate-300">任教班別與科目</th>
+                  <th class="p-3.5 border-r border-slate-300">原訂課節時段</th>
+                  <th class="p-3.5">調往新時段</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-200 font-semibold">
                 <tr>
-                  <td class="p-3 border-r border-slate-200 font-black text-slate-900">申請方：${rec.teacherA}</td>
-                  <td class="p-3 border-r border-slate-200">${rec.className} 班 ${rec.subjectA}</td>
-                  <td class="p-3 border-r border-slate-200 text-slate-600">${rec.origSlot}</td>
-                  <td class="p-3 font-black text-indigo-700">${rec.targetSlot}</td>
+                  <td class="p-3.5 border-r border-slate-200 font-black text-slate-900">申請方：${rec.teacherA}</td>
+                  <td class="p-3.5 border-r border-slate-200">${rec.className} 班 ${rec.subjectA}</td>
+                  <td class="p-3.5 border-r border-slate-200 text-slate-600">${rec.origSlot}</td>
+                  <td class="p-3.5 font-black text-indigo-700">${rec.targetSlot}</td>
                 </tr>
                 <tr>
-                  <td class="p-3 border-r border-slate-200 font-black text-slate-900">受調方：${rec.teacherB}</td>
-                  <td class="p-3 border-r border-slate-200">${rec.className} 班 ${rec.subjectB}</td>
-                  <td class="p-3 border-r border-slate-200 text-slate-600">${rec.targetSlot}</td>
-                  <td class="p-3 font-black text-indigo-700">${rec.origSlot}</td>
+                  <td class="p-3.5 border-r border-slate-200 font-black text-slate-900">受調方：${rec.teacherB}</td>
+                  <td class="p-3.5 border-r border-slate-200">${rec.className} 班 ${rec.subjectB}</td>
+                  <td class="p-3.5 border-r border-slate-200 text-slate-600">${rec.targetSlot}</td>
+                  <td class="p-3.5 font-black text-indigo-700">${rec.origSlot}</td>
                 </tr>
               </tbody>
             </table>
@@ -1538,52 +1538,52 @@
       }
 
       printArea.innerHTML = `
-        <div class="max-w-2xl mx-auto space-y-6 text-slate-900">
+        <div class="max-w-3xl mx-auto space-y-7 text-slate-900">
           <!-- Official School Header -->
-          <div class="text-center border-b-2 border-slate-950 pb-4 space-y-1.5">
-            <h2 class="text-xl sm:text-2xl font-black tracking-tight text-slate-950">2026/27年度滬江小學調課安排</h2>
-            <div class="flex items-center justify-center gap-6 text-xs sm:text-sm font-black text-slate-700">
-              <span>文件類別：${rec.isCoverRecord ? '代課委派通知單' : '課堂對調確認單'}</span>
+          <div class="text-center border-b-2 border-slate-950 pb-5 space-y-2">
+            <h2 class="text-2xl sm:text-3xl font-black tracking-tight text-slate-950">2026/27年度滬江小學調課安排</h2>
+            <div class="flex items-center justify-center gap-8 text-sm sm:text-base font-black text-slate-700">
+              <span>文件類別：${rec.isCoverRecord ? '代課通知表格' : '調課確認'}</span>
               <span>單號：${rec.id}</span>
               <span>日期：${rec.date}</span>
             </div>
           </div>
 
           <!-- Slip Main Body -->
-          <div class="space-y-4 text-xs sm:text-sm">
+          <div class="space-y-5 text-sm sm:text-base">
             <div class="leading-relaxed font-semibold">
-              <strong>教務處通告：</strong>
-              本校 ${rec.className} 班之相關課節已按校本調課原則審核通過。調動符合「同班科任調換上課次序」、「單節彈性調整」、「雙師合教同步連動」及「體育≤2班、電腦≤1班」之場地限制。請相關科任教師依下列時間表授課。
+              <strong>調課/代課提示：</strong>
+               ${rec.className} 班之相關課節已進行調課安排，請相關科任依下列時間表授課。
             </div>
 
             ${detailsHtml}
 
-            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs sm:text-sm text-slate-700 space-y-1 font-medium">
+            <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 text-sm sm:text-base text-slate-700 space-y-1.5 font-medium">
               <p><strong>備註說明：</strong> ${rec.note}</p>
-              <p class="text-slate-500 font-bold">※ 請相關教師相互提醒學生帶備所需課本及學具，並在黑板註明調堂安排。</p>
+              <p class="text-slate-500 font-bold">※ 請班主任早上提醒學生有關調課安排。</p>
             </div>
           </div>
 
           <!-- Official Required Signatures: 相關教師 & 校長簽署 -->
-          <div class="pt-8 grid grid-cols-2 gap-8 text-xs sm:text-sm">
-            <div class="space-y-9">
-              <p class="font-black text-slate-900">相關教師：</p>
+          <div class="pt-8 grid grid-cols-2 gap-8 text-sm sm:text-base">
+            <div class="space-y-10">
+              <p class="font-black text-slate-900 text-base sm:text-lg">相關教師：</p>
               <div class="border-b-2 border-slate-400 w-4/5"></div>
-              <p class="text-xs sm:text-sm text-slate-600 font-black">
-                ${rec.isCoverRecord ? `原任課：${rec.teacherA} / 代任：${rec.teacherB}` : (rec.isCycleSwap ? '全體涉及科任教師' : `${rec.teacherA} 老師 / ${rec.teacherB} 老師`)}
+              <p class="text-sm sm:text-base text-slate-600 font-black">
+                ${rec.isCoverRecord ? `原科任：${rec.teacherA} / 調動科任：${rec.teacherB}` : (rec.isCycleSwap ? '全體相關科任' : `${rec.teacherA} 老師 / ${rec.teacherB} 老師`)}
               </p>
             </div>
 
-            <div class="space-y-9">
-              <p class="font-black text-slate-900">校長簽署：</p>
+            <div class="space-y-10">
+              <p class="font-black text-slate-900 text-base sm:text-lg">校長簽署：</p>
               <div class="border-b-2 border-slate-400 w-4/5"></div>
-              <p class="text-xs sm:text-sm text-slate-600 font-black">日期：2026 年 &nbsp;&nbsp;&nbsp;&nbsp; 月 &nbsp;&nbsp;&nbsp;&nbsp; 日</p>
+              <p class="text-sm sm:text-base text-slate-600 font-black">日期：2026 年 &nbsp;&nbsp;&nbsp;&nbsp; 月 &nbsp;&nbsp;&nbsp;&nbsp; 日</p>
             </div>
           </div>
         </div>
       `;
 
-      lastGeneratedSlipText = `【2026/27年度滬江小學調課安排】\n單號：${rec.id}\n日期：${rec.date}\n班別：${rec.className}\n類別：${rec.type}\n備註：${rec.note}`;
+      lastGeneratedSlipText = `【2026/27年度滬江小學調課/代課表格】\n單號：${rec.id}\n日期：${rec.date}\n班別：${rec.className}\n類別：${rec.type}\n備註：${rec.note}`;
 
       document.getElementById('slip-modal').classList.remove('hidden');
       document.getElementById('slip-modal').classList.add('flex');
