@@ -1497,7 +1497,7 @@
           <div class="text-center border-b-2 border-slate-950 pb-4 space-y-1.5">
             <h2 class="text-xl sm:text-2xl font-black tracking-tight text-slate-950">2026/27年度滬江小學調課安排</h2>
             <div class="flex items-center justify-center gap-6 text-xs sm:text-sm font-black text-slate-700">
-              <span>文件類別：${rec.isCoverRecord ? '代課委派通知單' : '課堂對調確認單'}</span>
+              <span>文件類別：${rec.isCoverRecord ? '代課通知表格' : '調課確認'}</span>
               <span>單號：${rec.id}</span>
               <span>日期：${rec.date}</span>
             </div>
@@ -1506,15 +1506,15 @@
           <!-- Slip Main Body -->
           <div class="space-y-4 text-xs sm:text-sm">
             <div class="leading-relaxed font-semibold">
-              <strong>教務處通告：</strong>
-              本校 ${rec.className} 班之相關課節已按校本調課原則審核通過。調動符合「同班科任調換上課次序」、「單節彈性調整」、「雙師合教同步連動」及「體育≤2班、電腦≤1班」之場地限制。請相關科任教師依下列時間表授課。
+              <strong>調課/代課提示：</strong>
+               ${rec.className} 班之相關課節已進行調課安排，請相關科任依下列時間表授課。
             </div>
 
             ${detailsHtml}
 
             <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs sm:text-sm text-slate-700 space-y-1 font-medium">
               <p><strong>備註說明：</strong> ${rec.note}</p>
-              <p class="text-slate-500 font-bold">※ 請相關教師相互提醒學生帶備所需課本及學具，並在黑板註明調堂安排。</p>
+              <p class="text-slate-500 font-bold">※ 請班主任提醒學生調堂安排，注意上課用書。</p>
             </div>
           </div>
 
@@ -1524,7 +1524,7 @@
               <p class="font-black text-slate-900">相關教師：</p>
               <div class="border-b-2 border-slate-400 w-4/5"></div>
               <p class="text-xs sm:text-sm text-slate-600 font-black">
-                ${rec.isCoverRecord ? `原任課：${rec.teacherA} / 代任：${rec.teacherB}` : (rec.isCycleSwap ? '全體涉及科任教師' : `${rec.teacherA} 老師 / ${rec.teacherB} 老師`)}
+                ${rec.isCoverRecord ? `原科任：${rec.teacherA} / 調動科任：${rec.teacherB}` : (rec.isCycleSwap ? '全體相關科任' : `${rec.teacherA} 老師 / ${rec.teacherB} 老師`)}
               </p>
             </div>
 
